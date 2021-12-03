@@ -1,5 +1,9 @@
 /***********************************************************************
- *  afterglow pico:
+ *   ___  ___  ___  ___  ___  ___   _    ___  _ _ _ 
+ *  | . || __>|_ _|| __>| . \/  _> | |  | . || | | |
+ *  |   || _>  | | | _> |   /| <_/\| |_ | | || | | |
+ *  |_|_||_|   |_| |___>|_\_\`____/|___|`___'|__/_/ 
+ *                                                  pico
  *      Copyright (c) 2021 bitfield labs
  *
  ***********************************************************************
@@ -21,24 +25,6 @@
  *  If not, see <http://www.gnu.org/licenses/>.
  ***********************************************************************/
  
-//------------------------------------------------------------------------------
-/* This code assumes following Raspberry pi pico pin layout:
- *
- *  +------------+-----------------+------------+-----------+
- *  | Name       | Function        | Pico Pin#  | Mode      |
- *  +------------+-----------------+------------+-----------+
- *  | DATA_IN    | Data In D0-D7   | GPIO 0-7   | INPUT     |
- *  | COL_IN     | Column Sig In   | GPIO 8     | INPUT     |
- *  | ROW_IN     | Row Sig IN      | GPIO 9     | INPUT     |
- *  | COMB_IN    | Combined Sig    | GPIO 10    | INPUT     |
- *  | LED        | LED             | GPIO 12    | OUTPUT    |
- *  | DATA_OUT   | Data Out D0-D7  | GPIO 15-22 | OUTPUT    |
- *  | COL_OUT    | Column Sig Out  | GPIO 26    | OUTPUT    |
- *  | ROW_OUT    | Row Sig Out     | GPIO 27    | OUTPUT    |
- *  | PIC_OUT_EN | Pico Out Enable | GPIO 28    | OUTPUT    |
- *  +------------+-----------------+------------+-----------+
-*/
-
 #include <stdio.h>
 #include "pico/stdlib.h"
 #include "pico/time.h"

@@ -1,5 +1,9 @@
 /***********************************************************************
- *  afterglow pico:
+ *   ___  ___  ___  ___  ___  ___   _    ___  _ _ _ 
+ *  | . || __>|_ _|| __>| . \/  _> | |  | . || | | |
+ *  |   || _>  | | | _> |   /| <_/\| |_ | | || | | |
+ *  |_|_||_|   |_| |___>|_\_\`____/|___|`___'|__/_/ 
+ *                                                  pico
  *      Copyright (c) 2021 bitfield labs
  *
  ***********************************************************************
@@ -69,7 +73,7 @@ bool pio_init()
     sSmBlank = pio_claim_unused_sm(sPioColRow, true);
     blanking_program_init(sPioColRow, sSmBlank, sSmBlankOffset);
 
-    // Output/Signal delay on PIO 1
+    // Lamp matrix output on PIO 1
 
     // Find a place for the PIO program in the instruction memory
     sSmOutOffset = pio_add_program(sPioOutput, &write_col_row_program);
