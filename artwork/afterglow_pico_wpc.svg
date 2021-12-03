@@ -1,0 +1,104 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+
+<svg
+   width="210mm"
+   height="297mm"
+   viewBox="0 0 210 297"
+   version="1.1"
+   id="svg5"
+   inkscape:version="1.1.1 (3bf5ae0d25, 2021-09-20, custom)"
+   sodipodi:docname="afterglow_pico_wpc95.svg"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:svg="http://www.w3.org/2000/svg">
+  <sodipodi:namedview
+     id="namedview7"
+     pagecolor="#ffffff"
+     bordercolor="#666666"
+     borderopacity="1.0"
+     inkscape:pageshadow="2"
+     inkscape:pageopacity="0.0"
+     inkscape:pagecheckerboard="0"
+     inkscape:document-units="mm"
+     showgrid="false"
+     inkscape:zoom="8.979798"
+     inkscape:cx="214.25872"
+     inkscape:cy="311.42126"
+     inkscape:window-width="3840"
+     inkscape:window-height="2041"
+     inkscape:window-x="0"
+     inkscape:window-y="0"
+     inkscape:window-maximized="1"
+     inkscape:current-layer="layer1" />
+  <defs
+     id="defs2">
+    <rect
+       x="115.95723"
+       y="212.39793"
+       width="411.50736"
+       height="100.28941"
+       id="rect2564" />
+  </defs>
+  <g
+     inkscape:label="Layer 1"
+     inkscape:groupmode="layer"
+     id="layer1">
+    <text
+       xml:space="preserve"
+       transform="matrix(0.26458333,0,0,0.26458333,5.8584438,20.220219)"
+       id="text2562"
+       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:40px;line-height:1.25;font-family:Budmo;-inkscape-font-specification:Budmo;white-space:pre;shape-inside:url(#rect2564);fill:#000000;fill-opacity:1;stroke:none"
+       inkscape:export-filename="/home/smyp/data/elektronikbaschtel/afterglow/afterglow_pico/ag_pico_logo.png"
+       inkscape:export-xdpi="927.40002"
+       inkscape:export-ydpi="927.40002"><tspan
+         x="115.95703"
+         y="247.39844"
+         id="tspan24983">AFTER</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:10.5833px;line-height:1.25;font-family:Budmo;-inkscape-font-specification:Budmo;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.264583"
+       x="36.412704"
+       y="92.903061"
+       id="text12667"
+       inkscape:export-filename="/home/smyp/data/elektronikbaschtel/afterglow/afterglow_pico/ag_pico_logo.png"
+       inkscape:export-xdpi="927.40002"
+       inkscape:export-ydpi="927.40002"><tspan
+         sodipodi:role="line"
+         id="tspan12665"
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-family:Budmo;-inkscape-font-specification:Budmo;stroke-width:0.264583"
+         x="36.412704"
+         y="92.903061">GLOW</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:3.6165px;line-height:1.25;font-family:Impact;-inkscape-font-specification:Impact;fill:none;fill-opacity:1;stroke:#000000;stroke-width:0.169523;stroke-opacity:1"
+       x="26.042217"
+       y="114.48485"
+       id="text21887"
+       transform="scale(1.4618781,0.68405157)"
+       inkscape:export-filename="/home/smyp/data/elektronikbaschtel/afterglow/afterglow_pico/ag_pico_logo.png"
+       inkscape:export-xdpi="927.40002"
+       inkscape:export-ydpi="927.40002"><tspan
+         sodipodi:role="line"
+         id="tspan21885"
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:3.6165px;font-family:Impact;-inkscape-font-specification:Impact;fill:none;stroke:#000000;stroke-width:0.169523;stroke-opacity:1"
+         x="26.042217"
+         y="114.48485">ones&amp;zeros</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:3.6165px;line-height:1.25;font-family:Impact;-inkscape-font-specification:Impact;fill:none;fill-opacity:1;stroke:#000000;stroke-width:0.169523;stroke-opacity:1"
+       x="36.175571"
+       y="139.42155"
+       id="text21887-8"
+       transform="scale(1.4618781,0.68405157)"
+       inkscape:export-filename="/home/smyp/data/elektronikbaschtel/afterglow/afterglow_pico/ag_pico_logo.png"
+       inkscape:export-xdpi="927.40002"
+       inkscape:export-ydpi="927.40002"><tspan
+         sodipodi:role="line"
+         id="tspan21885-8"
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:3.6165px;font-family:Impact;-inkscape-font-specification:Impact;fill:none;stroke:#000000;stroke-width:0.169523;stroke-opacity:1"
+         x="36.175571"
+         y="139.42155">pico</tspan></text>
+  </g>
+</svg>

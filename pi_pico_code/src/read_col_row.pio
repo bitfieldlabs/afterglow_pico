@@ -1,0 +1,50 @@
+;***********************************************************************
+;*  afterglow pico:
+;*      Copyright (c) 2021 bitfield labs
+;*
+;***********************************************************************
+;*  This file is part of the afterglow pinball LED project:
+;*  https://github.com/smyp/afterglow
+;*
+;*  afterglow is free software: you can redistribute it and/or modify
+;*  it under the terms of the GNU Lesser General Public License as
+;*  published by the Free Software Foundation, either version 3 of the
+;*  License, or (at your option) any later version.
+;*
+;*  afterglow is distributed in the hope that it will be useful,
+;*  but WITHOUT ANY WARRANTY; without even the implied warranty of
+;*  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+;*  GNU Lesser General Public License for more details.
+;*
+;*  You should have received a copy of the GNU Lesser General Public
+;*  License along with afterglow.
+;*  If not, see <http://www.gnu.org/licenses/>.
+;***********************************************************************
+
+
+; pin 0 should be mapped to the col/row signal
+
+.program read_col_row
+.wrap_target
+    wait 0 pin 0 [8]      ; wait for pin 0 (the col/row signal) to go LOW (plus some debouncing)
+    wait 1 pin 0          ; wait for the rising edge
+    in pins 32            ; read all pins
+    push [31]             ; push the data to the FIFO (plus some debouncing)
+.wrap                     ; there's no stopping!
+
+
+% c-sdk {
+// this is a raw helper function for use by the user which sets up the GPIO output, and configures the SM to output on a particular pin
+
+void read_col_row_program_init(PIO pio, uint sm, uint offset, uint pin)
+{
+    //pio_gpio_init(pio, pin);
+    pio_sm_set_consecutive_pindirs(pio, sm, 0, 32, false);
+    //pio_sm_set_consecutive_pindirs(pio, sm, 16, 16, true);
+    pio_sm_config c = read_col_row_program_get_default_config(offset);
+    sm_config_set_in_pins(&c, pin);
+    sm_config_set_in_shift(&c, false, false, 32);
+    pio_sm_init(pio, sm, offset, &c);
+    pio_sm_set_enabled(pio, sm, true);
+}
+%}

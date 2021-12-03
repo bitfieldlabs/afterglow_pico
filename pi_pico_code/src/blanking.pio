@@ -1,0 +1,58 @@
+;***********************************************************************
+;*  afterglow pico:
+;*      Copyright (c) 2021 bitfield labs
+;*
+;***********************************************************************
+;*  This file is part of the afterglow pinball LED project:
+;*  https://github.com/smyp/afterglow
+;*
+;*  afterglow is free software: you can redistribute it and/or modify
+;*  it under the terms of the GNU Lesser General Public License as
+;*  published by the Free Software Foundation, either version 3 of the
+;*  License, or (at your option) any later version.
+;*
+;*  afterglow is distributed in the hope that it will be useful,
+;*  but WITHOUT ANY WARRANTY; without even the implied warranty of
+;*  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+;*  GNU Lesser General Public License for more details.
+;*
+;*  You should have received a copy of the GNU Lesser General Public
+;*  License along with afterglow.
+;*  If not, see <http://www.gnu.org/licenses/>.
+;***********************************************************************
+
+
+.program blanking
+.wrap_target
+start:
+    in pins, 1            ; read the blanking input pin
+    mov osr, isr          ; copy data to the output register
+    out pins, 1           ; duplicate the input to the output pin
+    jmp pin led_off       ; jump based on blanking input
+    set pins, 1           ; turn LED on
+    jmp start
+led_off:
+    set pins, 0           ; turn LED off
+.wrap                     ; there's no stopping!
+
+
+% c-sdk {
+// this is a raw helper function for use by the user which sets up the GPIO output, and configures the SM to output on a particular pin
+
+void blanking_program_init(PIO pio, uint sm, uint offset)
+{
+    pio_gpio_init(pio, 12);   // led
+    pio_gpio_init(pio, 14);   // blanking output
+    pio_sm_set_consecutive_pindirs(pio, sm, 11, 1, false); // input pins
+    pio_sm_set_consecutive_pindirs(pio, sm, 12, 3, true); // output pins
+    pio_sm_config c = blanking_program_get_default_config(offset);
+    sm_config_set_in_pins(&c, 11);      // blanking in signal
+    sm_config_set_out_pins(&c, 14, 1);  // blanking out signal
+    sm_config_set_set_pins(&c, 12, 1);  // LED
+    sm_config_set_in_shift(&c, false, false, 32);
+    sm_config_set_out_shift(&c, true, false, 32);
+    sm_config_set_jmp_pin(&c, 11);      // jump based on blanking pin input
+    pio_sm_init(pio, sm, offset, &c);
+    pio_sm_set_enabled(pio, sm, true);
+}
+%}

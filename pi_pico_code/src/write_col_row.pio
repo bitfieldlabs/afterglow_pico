@@ -1,0 +1,183 @@
+;***********************************************************************
+;*   ___  ___  ___  ___  ___  ___   _    ___  _ _ _ 
+;*  | . || __>|_ _|| __>| . \/  _> | |  | . || | | |
+;*  |   || _>  | | | _> |   /| <_/\| |_ | | || | | |
+;*  |_|_||_|   |_| |___>|_\_\`____/|___|`___'|__/_/ 
+;*                                                  pico
+;*      Copyright (c) 2021 bitfield labs
+;*
+;***********************************************************************
+;*  This file is part of the afterglow pinball LED project:
+;*  https://github.com/smyp/afterglow
+;*
+;*  afterglow is free software: you can redistribute it and/or modify
+;*  it under the terms of the GNU Lesser General Public License as
+;*  published by the Free Software Foundation, either version 3 of the
+;*  License, or (at your option) any later version.
+;*
+;*  afterglow is distributed in the hope that it will be useful,
+;*  but WITHOUT ANY WARRANTY; without even the implied warranty of
+;*  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+;*  GNU Lesser General Public License for more details.
+;*
+;*  You should have received a copy of the GNU Lesser General Public
+;*  License along with afterglow.
+;*  If not, see <http://www.gnu.org/licenses/>.
+;***********************************************************************
+
+/*
+
+Original WPC95 signals:
+
+              Anti-Ghosting                           New Col/Row Data
+              All Col/Row OFF
+--------------+   +---------------------------------------------+   +-------   Column Signal
+              |   |                                             |   |
+              |   |                                             |   |
+              |   |                                             |   |
+              +---+                                             +---+
+                   <--->                                    <-->
+                    2us                                     2us
+-----------------------+   +----------------------------+   +----------------  Row Signal
+                       |   |                            |   |
+                       |   |                            |   |
+                       |   |                            |   |
+                       +---+                            +---+
+                                                        <--->
+                                                        400ns
+                                       32us
+                          <------------------------------>
+
+
+Afterglow lamp matrix signals:
+
+              Anti-Ghosting                           New Col/Row Data
+              All Col/Row OFF
+--------------+   +---------------------------------------------+   +-------   Column Signal
+              |   |                                             |   |
+              |   |                                             |   |
+              |   |                                             |   |
+              +---+                                             +---+
+                                                            <--->
+                                                            500ns
+-----------------------+   +----------------------------+   +----------------  Row Signal
+                       |   |                            |   |
+                       |   |                            |   |
+                       |   |                            |   |
+                       +---+                            +---+
+                                                        <--->
+                                                        300ns
+                                    20us
+                          <------------------------------>
+
+
+
+Conflicts with combined data line:
+
+Combined data line is low when lamp signal is due:
+
+Comb Data Line -----------+     +--------------------
+                          |     |
+                          |     |
+                          |     |
+                          +-----+
+
+                                  Wait for other data line to go high again
+Col/Row Signal ------------------+   +--------------------
+                            .    |   |
+                            .    |   |
+                            .    |   |
+                            .....+---+
+
+                          Wait for delayed combined data line to go high
+
+
+Combined data line goes low while lamp signal active:
+
+Comb Data Line ----------------+     +--------------------
+                               |     |
+                               |     |
+                               |     |
+                               +-----+
+
+                                     Wait for delayed combined data line to go high again (plus some margin)
+Col/Row Signal --------------+   . . . +--------------------
+                             |   .     |
+                             |   .     |
+                             |   .     |
+                             +---------+
+ */
+
+.program write_col_row
+.wrap_target
+    pull block            ; wait for new data in the FIFO
+    mov x, !osr           ; copy the inversed data to the scratch register
+    jmp !x column         ; different handling for anti-ghosting (columns and rows all HIGH, column must be set first) or real data (rows must be set first)
+    jmp row               ; valid data mode, do the row output first
+
+row_wait:
+    mov x, x [31]         ; wait a bit longer
+row:
+    wait 1 pin 0          ; wait for the combined address line to be HIGH (no other bus event active)
+    set pins, 0x5 [7]     ; pull row line LOW, enable the output, wait some nanoseconds
+    out pins, 8 [31]      ; copy the data to the data out pins, wait a bit
+    jmp pin row_trigger   ; if the combined address line is still high it's time to trigger the latch
+
+    ; an event on another line was triggered - we have to wait until it's done
+    set pins, 0x1 [7]     ; disable the output for now to make sure it's not interfering with the data of the active event
+    wait 1 pin 0 [16]     ; make sure that the combined address signal is HIGH again (no other event active), add some safety delay
+    set pins, 0x5 [7]     ; enable the output again, wait some nanoseconds
+row_trigger:
+    set pins, 0x7 [5]     ; pull the row line HIGH again (this is the latch trigger); if the combined line went low in the meantime at least there will be only a weird lamp glitch
+    set pins, 0x3 [31]    ; disable output again
+    jmp !x end            ; anti-ghosting mode is done here
+    mov x, x [31]         ; wait a bit longer
+
+column:
+    wait 1 pin 0          ; wait for the combined address line to be HIGH (no other bus event active)
+    set pins, 0x6 [7]     ; pull column line LOW, enable the output, wait some nanoseconds
+    out pins, 8 [31]      ; copy the data to the data out pins, wait a bit
+    jmp pin col_trigger   ; if the combined address line is still high it's time to trigger the latch
+
+    ; an event on another line was triggered - we have to wait until it's done
+    set pins, 0x2 [7]     ; disable the output for now to make sure it's not interfering with the data of the active event
+    wait 1 pin 0 [16]     ; make sure that the combined address signal is HIGH again (no other event active), add some safety delay
+    set pins, 0x6 [7]     ; enable the output again, wait some nanoseconds
+col_trigger:
+    set pins, 0x7 [5]     ; pull the column line HIGH again (this is the latch trigger); if the combined line went low in the meantime at least there will be only a weird lamp glitch
+    set pins, 0x3 [31]    ; disable output again
+    jmp !x row_wait       ; anti-ghosting needs to output the row next
+
+end:
+    out null, 16          ; discard remaining OSR bits
+.wrap                     ; there's no stopping!
+
+
+% c-sdk {
+// this is a raw helper function for use by the user which sets up the GPIO output, and configures the SM to output on a particular pin
+
+#include "pindef.h"
+
+void write_col_row_program_init(PIO pio, uint sm, uint offset)
+{
+    for (uint32_t i=15; i<=22; i++)
+    {
+        pio_gpio_init(pio, i);
+    }
+    for (uint32_t i=26; i<=28; i++)
+    {
+        pio_gpio_init(pio, i);
+    }
+    pio_sm_set_consecutive_pindirs(pio, sm, 0, 11, false); // input pins
+    pio_sm_set_consecutive_pindirs(pio, sm, 15, 14, true); // output pins
+    pio_sm_config c = write_col_row_program_get_default_config(offset);
+    sm_config_set_in_pins(&c, AG_PICO_PIN_COMB_SIG);  // combined address line
+    sm_config_set_out_pins(&c, 15, 8);  // data out
+    sm_config_set_set_pins(&c, 26, 3);  // col/row signal, output enable signal
+    sm_config_set_in_shift(&c, false, false, 32);
+    sm_config_set_out_shift(&c, true, false, 32);
+    sm_config_set_jmp_pin(&c, AG_PICO_PIN_COMB_SIG);      // jump based on combined address line
+    pio_sm_init(pio, sm, offset, &c);
+    pio_sm_set_enabled(pio, sm, true);
+}
+%}
