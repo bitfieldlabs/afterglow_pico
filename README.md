@@ -11,4 +11,4 @@ The concept is quite simple:
 * All non lamp related bus events are directly routed through a multiplexer to the output. Only the lamp events are filtered out.
 * The Pi Pico interleaves the upsampled 4kHz PWM lamp matrix events into the bus through the multiplexer
 
-![afterglow_pico_schmeatic](https://github.com/bitfieldlabs/afterglow_pico/blob/master/pcb_v11/afterglow_pico.pdf "Afterglow Pico Schematic")
+![Afterglow Pico Schematic](https://github.com/bitfieldlabs/afterglow_pico/blob/master/pcb_v11/afterglow_pico.pdf "Afterglow Pico Schematic")
