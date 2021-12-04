@@ -55,6 +55,7 @@ static PIO sPioOutput = pio1;
 static int sSmOut = -1;
 static int sSmOutOffset = -1;
 
+
 //------------------------------------------------------------------------------
 bool pio_init()
 {
@@ -99,7 +100,6 @@ uint16_t pio_col_row_data()
             {
                 uint32_t d = pio_sm_get(sPioColRow, sSmRow);
                 sRowDataPrel = (uint8_t)((d >> 23) & 0xff);
-                //printf("ROW %04lx %02x\n", d, sRowDataPrel);
             }
         }
 
@@ -119,7 +119,6 @@ uint16_t pio_col_row_data()
                     // adopt the new column/row data
                     sColData = colData;
                     sRowData = sRowDataPrel;
-                    //printf("CR data %04lx %02x %02x\n", d, sColData, sRowData);
                 }
             }
         }

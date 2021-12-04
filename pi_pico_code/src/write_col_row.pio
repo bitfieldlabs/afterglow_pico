@@ -160,6 +160,7 @@ end:
 
 void write_col_row_program_init(PIO pio, uint sm, uint offset)
 {
+    // initialize the output pins
     for (uint32_t i=15; i<=22; i++)
     {
         pio_gpio_init(pio, i);
@@ -168,15 +169,23 @@ void write_col_row_program_init(PIO pio, uint sm, uint offset)
     {
         pio_gpio_init(pio, i);
     }
-    pio_sm_set_consecutive_pindirs(pio, sm, 0, 11, false); // input pins
-    pio_sm_set_consecutive_pindirs(pio, sm, 15, 14, true); // output pins
+
+    // input pins
+    pio_sm_set_consecutive_pindirs(pio, sm, 0, 11, false);
+
+    // output pins
+    pio_sm_set_consecutive_pindirs(pio, sm, 15, 14, true);
+
+    // configure the state machine
     pio_sm_config c = write_col_row_program_get_default_config(offset);
-    sm_config_set_in_pins(&c, AG_PICO_PIN_COMB_SIG);  // combined address line
-    sm_config_set_out_pins(&c, 15, 8);  // data out
-    sm_config_set_set_pins(&c, 26, 3);  // col/row signal, output enable signal
+    sm_config_set_in_pins(&c, AG_PICO_PIN_COMB_SIG);        // combined address line
+    sm_config_set_out_pins(&c, AG_PICO_PIN_DATA_OUT_D0, 8); // data out
+    sm_config_set_set_pins(&c, AG_PICO_PIN_LCOL_OUT, 3);    // col/row signal, output enable signal
     sm_config_set_in_shift(&c, false, false, 32);
     sm_config_set_out_shift(&c, true, false, 32);
-    sm_config_set_jmp_pin(&c, AG_PICO_PIN_COMB_SIG);      // jump based on combined address line
+    sm_config_set_jmp_pin(&c, AG_PICO_PIN_COMB_SIG);        // jump based on combined address line
+
+    // initialize and enable the state machine
     pio_sm_init(pio, sm, offset, &c);
     pio_sm_set_enabled(pio, sm, true);
 }

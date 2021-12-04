@@ -36,6 +36,7 @@
 //------------------------------------------------------------------------------
 // local variables
 
+// The 250us timer is the realtime task of this software
 static repeating_timer_t sHeartbeatTimer;
 
 

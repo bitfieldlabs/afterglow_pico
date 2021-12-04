@@ -42,12 +42,15 @@
 
 void read_col_row_program_init(PIO pio, uint sm, uint offset, uint pin)
 {
-    //pio_gpio_init(pio, pin);
+    // all pins are input
     pio_sm_set_consecutive_pindirs(pio, sm, 0, 32, false);
-    //pio_sm_set_consecutive_pindirs(pio, sm, 16, 16, true);
+
+    // configure the state machine
     pio_sm_config c = read_col_row_program_get_default_config(offset);
-    sm_config_set_in_pins(&c, pin);
+    sm_config_set_in_pins(&c, pin);  // pin 0 is the trigger (column/row) signal
     sm_config_set_in_shift(&c, false, false, 32);
+
+    // initialize and enable the state machine
     pio_sm_init(pio, sm, offset, &c);
     pio_sm_set_enabled(pio, sm, true);
 }

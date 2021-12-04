@@ -46,6 +46,7 @@
 
 
 // Input
+#define AG_PICO_PIN_DATA_IN_D0 15    // First data in pin
 #define AG_PICO_PIN_LCOL_IN 8        // Lamp matrix column input
 #define AG_PICO_PIN_LROW_IN 9        // Lamp matrix row input
 #define AG_PICO_PIN_COMB_SIG 10      // Combined signal input
@@ -55,6 +56,7 @@
 // Output
 #define AG_PICO_PIN_OE 13            // Output enable pin
 #define AG_PICO_PIN_BLANKING_OUT 14  // Blanking signal output pin
+#define AG_PICO_PIN_DATA_OUT_D0 15   // First data out pin
 #define AG_PICO_PIN_LCOL_OUT 26      // Lamp matrix column output
 #define AG_PICO_PIN_LROW_OUT 27      // Lamp matrix row output
 #define AG_PICO_PIN_DATAOE 28        // Data output enable

@@ -30,32 +30,31 @@
 .wrap_target
 start:
     in pins, 1            ; read the blanking input pin
-    mov osr, isr          ; copy data to the output register
     out pins, 1           ; duplicate the input to the output pin
-    jmp pin led_off       ; jump based on blanking input
-    set pins, 1           ; turn LED on
-    jmp start
-led_off:
-    set pins, 0           ; turn LED off
 .wrap                     ; there's no stopping!
 
 
 % c-sdk {
 // this is a raw helper function for use by the user which sets up the GPIO output, and configures the SM to output on a particular pin
 
+#include "pindef.h"
+
 void blanking_program_init(PIO pio, uint sm, uint offset)
 {
-    pio_gpio_init(pio, 12);   // led
-    pio_gpio_init(pio, 14);   // blanking output
-    pio_sm_set_consecutive_pindirs(pio, sm, 11, 1, false); // input pins
-    pio_sm_set_consecutive_pindirs(pio, sm, 12, 3, true); // output pins
+    // initialize the GPIOs
+    pio_gpio_init(pio, AG_PICO_PIN_BLANKING_OUT);   // blanking output
+    pio_sm_set_consecutive_pindirs(pio, sm, AG_PICO_PIN_BLANKING_IN, 1, false); // input pins
+    pio_sm_set_consecutive_pindirs(pio, sm, AG_PICO_PIN_BLANKING_OUT, 1, true); // output pins
+
+    // configure the state machine
     pio_sm_config c = blanking_program_get_default_config(offset);
-    sm_config_set_in_pins(&c, 11);      // blanking in signal
-    sm_config_set_out_pins(&c, 14, 1);  // blanking out signal
-    sm_config_set_set_pins(&c, 12, 1);  // LED
+    sm_config_set_in_pins(&c, AG_PICO_PIN_BLANKING_IN);       // blanking in signal
+    sm_config_set_out_pins(&c, AG_PICO_PIN_BLANKING_OUT, 1);  // blanking out signal
     sm_config_set_in_shift(&c, false, false, 32);
     sm_config_set_out_shift(&c, true, false, 32);
-    sm_config_set_jmp_pin(&c, 11);      // jump based on blanking pin input
+    sm_config_set_jmp_pin(&c, AG_PICO_PIN_BLANKING_IN);      // jump based on blanking pin input
+
+    // initialize and enable the state machine
     pio_sm_init(pio, sm, offset, &c);
     pio_sm_set_enabled(pio, sm, true);
 }
