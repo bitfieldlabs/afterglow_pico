@@ -27,8 +27,10 @@
 
 #include <string.h>
 #include "afterglow.h"
+#include "pico/stdlib.h"
 #include "pico/time.h"
 #include "pio.h"
+#include "pindef.h"
 
 
 //------------------------------------------------------------------------------
@@ -252,6 +254,9 @@ void ag_update()
     // time is running
     absolute_time_t startCnt = get_absolute_time();
     sTtag++;
+
+    // read the test mode configuration
+    sTstModeCfg.testMode = !gpio_get(AG_PICO_PIN_TESTMODE_IN);
 
     // kick the dog
     // todo

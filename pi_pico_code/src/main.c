@@ -54,8 +54,15 @@ int main(void)
     stdio_init_all();
 
     printf("\n\nAfterglow Pico v0.1\n");
+
+    // initialize the Pi Pico's LED
     gpio_init(PICO_DEFAULT_LED_PIN);
     gpio_set_dir(PICO_DEFAULT_LED_PIN, GPIO_OUT);
+
+    // test mode pin
+    gpio_init(AG_PICO_PIN_TESTMODE_IN);
+    gpio_set_dir(AG_PICO_PIN_TESTMODE_IN, GPIO_IN);
+    gpio_set_pulls(AG_PICO_PIN_TESTMODE_IN, true, false); // pull up
 
     // disable output for now
     gpio_init(AG_PICO_PIN_DATAOE);

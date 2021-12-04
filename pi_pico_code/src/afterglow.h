@@ -27,7 +27,6 @@
 
 #include <stdio.h> 
 
-
 // Initialize the afterglow engine
 void ag_init();
 

@@ -28,8 +28,8 @@
 
 .program blanking
 .wrap_target
-start:
     in pins, 1            ; read the blanking input pin
+    mov osr, isr          ; copy data to the output register
     out pins, 1           ; duplicate the input to the output pin
 .wrap                     ; there's no stopping!
 
