@@ -82,7 +82,7 @@ bool pio_init()
     sSmOut = pio_claim_unused_sm(sPioOutput, true);
     write_col_row_program_init(sPioOutput, sSmOut, sSmOutOffset);
 
-    return true;
+    return ((sSmCol != -1) && (sSmRow != -1) && (sSmBlank != -1) && (sSmOut != -1));
 }
 //------------------------------------------------------------------------------
 uint16_t pio_col_row_data()

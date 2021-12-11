@@ -49,6 +49,20 @@ bool heartbeat(struct repeating_timer *t)
 }
 
 //------------------------------------------------------------------------------
+void panic_mode()
+{
+    // endless panic
+    while (true)
+    {
+        // blinking alert
+        gpio_put(PICO_DEFAULT_LED_PIN, 1);
+        sleep_ms(200);
+        gpio_put(PICO_DEFAULT_LED_PIN, 0);
+        sleep_ms(200);
+    }
+}
+
+//------------------------------------------------------------------------------
 int main(void)
 {  
     stdio_init_all();
@@ -75,21 +89,17 @@ int main(void)
     ag_init();
 
     // PIO setup
-    pio_init();
+    if (!pio_init())
+    {
+        printf("Failed to initialize the PIOs!\n");
+        panic_mode();
+    }
 
     // Heartbeat setup
     if (!add_repeating_timer_us(-250, heartbeat, NULL, &sHeartbeatTimer))
     {
-        printf("Hach!\n");
-        while (true)
-        {
-            // can't do much really
-            // blinking alert
-            gpio_put(PICO_DEFAULT_LED_PIN, 1);
-            sleep_ms(200);
-            gpio_put(PICO_DEFAULT_LED_PIN, 0);
-            sleep_ms(200);
-        }
+        printf("Failed to start the heartbeat!\n");
+        panic_mode();
     }
 
     // Enable output
