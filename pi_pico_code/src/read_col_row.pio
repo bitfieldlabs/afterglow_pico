@@ -30,7 +30,7 @@
 
 .program read_col_row
 .wrap_target
-    wait 0 pin 0 [8]      ; wait for pin 0 (the col/row signal) to go LOW (plus some debouncing)
+    wait 0 pin 0 [20]     ; wait for pin 0 (the col/row signal) to go LOW (plus some debouncing)
     wait 1 pin 0          ; wait for the rising edge
     in pins 32            ; read all pins
     push [31]             ; push the data to the FIFO (plus some debouncing)

@@ -544,8 +544,9 @@ void driveLampMatrix()
     // turn off everything briefly to avoid ghosting
     dataOutput(0x00, 0x00);
 
-    // wait around 20us
-    busy_wait_us(20);
+    // Wait around 34us. This is about the same time the original WPC anti
+    // ghosting ROM does, so it's probably matching the output hardware quite well.
+    busy_wait_us(34);
 
     // check which column we're currently updating
     uint32_t outCol = (sTtag % NUM_COL);
