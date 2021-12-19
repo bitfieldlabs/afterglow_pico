@@ -6,7 +6,7 @@ encoding utf-8
 Sheet 1 1
 Title "Afterglow Pico"
 Date ""
-Rev "1.1"
+Rev "1.2"
 Comp "bitfield labs"
 Comment1 ""
 Comment2 ""
@@ -245,19 +245,6 @@ Wire Wire Line
 Wire Wire Line
 	3300 2750 3200 2750
 Wire Wire Line
-	3200 2750 3200 3050
-$Comp
-L power:GND #PWR0103
-U 1 1 617F4A3C
-P 3200 3050
-F 0 "#PWR0103" H 3200 2800 50  0001 C CNN
-F 1 "GND" H 3205 2877 50  0000 C CNN
-F 2 "" H 3200 3050 50  0001 C CNN
-F 3 "" H 3200 3050 50  0001 C CNN
-	1    3200 3050
-	1    0    0    -1  
-$EndComp
-Wire Wire Line
 	3300 2650 3200 2650
 Text Label 3200 2650 2    50   ~ 0
 3V3
@@ -315,18 +302,14 @@ $EndComp
 $Comp
 L power:GND #PWR0105
 U 1 1 6180E10A
-P 3200 5000
-F 0 "#PWR0105" H 3200 4750 50  0001 C CNN
-F 1 "GND" H 3205 4827 50  0000 C CNN
-F 2 "" H 3200 5000 50  0001 C CNN
-F 3 "" H 3200 5000 50  0001 C CNN
-	1    3200 5000
+P 2800 4300
+F 0 "#PWR0105" H 2800 4050 50  0001 C CNN
+F 1 "GND" H 2805 4127 50  0000 C CNN
+F 2 "" H 2800 4300 50  0001 C CNN
+F 3 "" H 2800 4300 50  0001 C CNN
+	1    2800 4300
 	1    0    0    -1  
 $EndComp
-Wire Wire Line
-	3200 5000 3200 4700
-Wire Wire Line
-	3200 4700 3300 4700
 Wire Wire Line
 	3300 4600 3200 4600
 Text Label 3200 4600 2    50   ~ 0
@@ -563,17 +546,6 @@ F 3 "" H 7050 4500 50  0001 C CNN
 	1    7050 4500
 	1    0    0    -1  
 $EndComp
-$Comp
-L 74xx_IEEE:74157 U8
-U 1 1 618A5B4B
-P 10000 1450
-F 0 "U8" H 10000 2166 50  0000 C CNN
-F 1 "74LS157" H 10000 2075 50  0000 C CNN
-F 2 "Housings_SSOP:SOP-16_4.4x10.4mm_Pitch1.27mm" H 10000 1450 50  0001 C CNN
-F 3 "" H 10000 1450 50  0001 C CNN
-	1    10000 1450
-	1    0    0    -1  
-$EndComp
 Text Label 9450 1400 2    50   ~ 0
 D0_PICO
 Text Label 9450 1600 2    50   ~ 0
@@ -633,17 +605,6 @@ Wire Wire Line
 	10150 800  10150 950 
 Text Label 10500 800  0    50   ~ 0
 5V_IN
-$Comp
-L 74xx_IEEE:74157 U9
-U 1 1 6190D249
-P 10000 2950
-F 0 "U9" H 10000 3666 50  0000 C CNN
-F 1 "74LS157" H 10000 3575 50  0000 C CNN
-F 2 "Housings_SSOP:SOP-16_4.4x10.4mm_Pitch1.27mm" H 10000 2950 50  0001 C CNN
-F 3 "" H 10000 2950 50  0001 C CNN
-	1    10000 2950
-	1    0    0    -1  
-$EndComp
 Text Label 9450 2900 2    50   ~ 0
 D4_PICO
 Text Label 9450 3100 2    50   ~ 0
@@ -1108,9 +1069,6 @@ Wire Wire Line
 Wire Wire Line
 	2950 4200 2950 4300
 Wire Wire Line
-	2950 4700 3200 4700
-Connection ~ 3200 4700
-Wire Wire Line
 	3300 4300 2950 4300
 Connection ~ 2950 4300
 Wire Wire Line
@@ -1122,9 +1080,6 @@ Wire Wire Line
 	2950 4400 2950 4500
 Wire Wire Line
 	3300 4500 2950 4500
-Connection ~ 2950 4500
-Wire Wire Line
-	2950 4500 2950 4700
 Wire Wire Line
 	7500 4650 7300 4650
 Wire Wire Line
@@ -6612,7 +6567,7 @@ Wire Wire Line
 	7450 3150 7500 3150
 Connection ~ 7450 3150
 Wire Wire Line
-	7450 3150 7450 5250
+	7450 3150 7450 3700
 Connection ~ 7050 4350
 Wire Wire Line
 	7050 4250 7050 4350
@@ -6733,8 +6688,6 @@ Wire Wire Line
 	9000 1050 9000 2550
 Wire Wire Line
 	9000 2550 9450 2550
-Wire Wire Line
-	7300 4550 7300 3700
 $Comp
 L power:GND #PWR0107
 U 1 1 6185E2EA
@@ -6767,11 +6720,6 @@ Wire Wire Line
 Wire Wire Line
 	8000 3800 8000 3950
 Wire Wire Line
-	9000 3700 7300 3700
-Connection ~ 7300 3700
-Wire Wire Line
-	7300 3700 7300 2050
-Wire Wire Line
 	9000 2550 9000 3700
 Connection ~ 9000 2550
 $Comp
@@ -6798,4 +6746,48 @@ Wire Wire Line
 	1700 7500 1700 7650
 Wire Wire Line
 	1800 7500 1800 7650
+Text Label 7450 5750 2    50   ~ 0
+PICO_EN_OUT
+Wire Wire Line
+	7450 5250 7450 5750
+Wire Wire Line
+	3300 4700 3200 4700
+Wire Wire Line
+	2950 4200 2800 4200
+Connection ~ 2950 4200
+Text Label 3200 4700 2    50   ~ 0
+PICO_EN_OUT
+Wire Wire Line
+	2800 4200 2800 4300
+Text Label 3200 2750 2    50   ~ 0
+PICO_EN_OUT
+Wire Wire Line
+	7300 2050 7300 4550
+Connection ~ 7450 3700
+Wire Wire Line
+	7450 3700 7450 5250
+Wire Wire Line
+	7450 3700 9000 3700
+$Comp
+L 74xx_IEEE:74LS257 U8
+U 1 1 618A5B4B
+P 10000 1500
+F 0 "U8" H 10000 2216 50  0000 C CNN
+F 1 "74LS257" H 10000 2125 50  0000 C CNN
+F 2 "Housings_SSOP:SOP-16_4.4x10.4mm_Pitch1.27mm" H 10000 1500 50  0001 C CNN
+F 3 "" H 10000 1500 50  0001 C CNN
+	1    10000 1500
+	1    0    0    -1  
+$EndComp
+$Comp
+L 74xx_IEEE:74LS257 U9
+U 1 1 6190D249
+P 10000 3000
+F 0 "U9" H 10000 3716 50  0000 C CNN
+F 1 "74LS257" H 10000 3625 50  0000 C CNN
+F 2 "Housings_SSOP:SOP-16_4.4x10.4mm_Pitch1.27mm" H 10000 3000 50  0001 C CNN
+F 3 "" H 10000 3000 50  0001 C CNN
+	1    10000 3000
+	1    0    0    -1  
+$EndComp
 $EndSCHEMATC
