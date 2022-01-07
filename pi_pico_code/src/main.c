@@ -84,6 +84,18 @@ int main(void)
     gpio_set_dir(AG_PICO_PIN_DATAOE, GPIO_OUT);
     gpio_init(AG_PICO_PIN_OE);
     gpio_init(AG_PICO_PIN_BLANKING_OUT);
+    for (uint32_t pin=AG_PICO_PIN_DATA_OUT_D0; pin<(AG_PICO_PIN_DATA_OUT_D0+8); pin++)
+    {
+        gpio_init(pin);
+        gpio_put(pin, true);
+        gpio_set_dir(pin, GPIO_OUT);
+    }
+    gpio_init(AG_PICO_PIN_LCOL_OUT);
+    gpio_put(AG_PICO_PIN_LCOL_OUT, true);
+    gpio_set_dir(AG_PICO_PIN_LCOL_OUT, GPIO_OUT);
+    gpio_init(AG_PICO_PIN_LROW_OUT);
+    gpio_put(AG_PICO_PIN_LROW_OUT, true);
+    gpio_set_dir(AG_PICO_PIN_LROW_OUT, GPIO_OUT);
 
     // afterglow init
     ag_init();

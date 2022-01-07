@@ -149,7 +149,8 @@ col_trigger:
     jmp !x row_wait       ; anti-ghosting needs to output the row next
 
 end:
-    out null, 16          ; discard remaining OSR bits
+    out pins, 8           ; pull all data lines high again
+    out null, 8           ; discard remaining OSR bits
 .wrap                     ; there's no stopping!
 
 

@@ -142,6 +142,8 @@ void pio_write_col_row_data(uint8_t colData, uint8_t rowData)
         {
             // The PIO will read the first 8 bits for the row, the next 8 bits for
             // the column. Data output is inverted (HIGH means off).
+            // The unused bits must be set to 0xffff as they are used to reset the
+            // data lines.
             uint32_t data = 0xffff0000;
             data |= ~((uint32_t)colData << 8) & 0x0000ff00;
             data |= ~((uint32_t)rowData) & 0x000000ff;
