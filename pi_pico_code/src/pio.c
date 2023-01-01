@@ -35,6 +35,21 @@
 
 
 //------------------------------------------------------------------------------
+// Local types
+
+#define ANTI_GHOST_MODE_DETECTION_THRESH 64
+
+typedef enum ANTI_GHOST_MODE_e
+{
+    ANTI_GHOST_MODE_UNKNOWN = 0,
+    ANTI_GHOST_MODE_WPC89_OLD,
+    ANTI_GHOST_MODE_WPC95,
+
+    ANTI_GHOST_MODE_LAST
+} ANTI_GHOST_MODE_t;
+
+
+//------------------------------------------------------------------------------
 // Local data
 
 // Column/row reading and blanking on PIO 0
@@ -48,12 +63,17 @@ static int sSmBlankOffset = -1;
 static int sSmDelayOffset = -1;
 static uint8_t sColData = 0;
 static uint8_t sRowData = 0;
+static uint8_t sColDataPrel = 0; // preliminary column data
 static uint8_t sRowDataPrel = 0; // preliminary row data
 
 // Data output on PIO 1
 static PIO sPioOutput = pio1;
 static int sSmOut = -1;
 static int sSmOutOffset = -1;
+
+// Anti-ghosting mode, needs to be identified first
+static ANTI_GHOST_MODE_t sAntiGhostMode = ANTI_GHOST_MODE_WPC89_OLD;
+static uint8_t sAntiGhostModeId[ANTI_GHOST_MODE_LAST] = {0};
 
 
 //------------------------------------------------------------------------------
@@ -84,12 +104,16 @@ bool pio_init()
 
     return ((sSmCol != -1) && (sSmRow != -1) && (sSmBlank != -1) && (sSmOut != -1));
 }
+
 //------------------------------------------------------------------------------
 uint16_t pio_col_row_data()
 {
     // Process all new data
     bool noColData = false;
     bool noRowData = false;
+    uint8_t numColData = 0;
+    uint8_t numRowData = 0;
+    bool waited = false;
     while (!noColData || !noRowData)
     {
         // Check for new row data
@@ -100,6 +124,7 @@ uint16_t pio_col_row_data()
             {
                 uint32_t d = pio_sm_get(sPioColRow, sSmRow);
                 sRowDataPrel = (uint8_t)((d >> 23) & 0xff);
+                numRowData++;
             }
         }
 
@@ -110,15 +135,67 @@ uint16_t pio_col_row_data()
             if (!noColData)
             {
                 uint32_t d = pio_sm_get(sPioColRow, sSmCol);
-                uint8_t colData = (uint8_t)(d >> 24);
+                sColDataPrel = (uint8_t)(d >> 24);
+                numColData++;
+            }
+        }
 
-                // When all columns are HIGH, we're in the middle of anti-ghosting.
-                // Otherwise we can sample the new matrix entry.
-                if ((colData != 0xff) && (colData != sColData))
+        // wait a bit for new data to arrive - all input should happen
+        // within a few microseconds
+        if (!waited && noColData && noRowData && ((numColData + numRowData) < 4))
+        {
+            waited = true;
+            noColData = false;
+            sleep_us(6);
+        }
+    }
+
+    // Try to identify the mode
+    ANTI_GHOST_MODE_t mode = ANTI_GHOST_MODE_UNKNOWN;
+    if ((numColData == 2) && (numRowData == 2))
+    {
+        mode = ANTI_GHOST_MODE_WPC95;
+    }
+    else if ((numRowData == 3) && (numColData == 1))
+    {
+        mode = ANTI_GHOST_MODE_WPC89_OLD;
+    }
+    
+    if ((sAntiGhostMode != ANTI_GHOST_MODE_UNKNOWN) && (mode == sAntiGhostMode) &&
+        (sColDataPrel != 0))
+    {
+        // Adopt the new data
+        if ((mode == ANTI_GHOST_MODE_WPC89_OLD) ||
+            (mode == ANTI_GHOST_MODE_WPC95))
+        {
+            sColData = sColDataPrel;
+            sRowData = sRowDataPrel;
+        }
+    }
+    // Identify the anti ghosting mode
+    else
+    {
+        // Count successful identifications
+        if (mode != ANTI_GHOST_MODE_UNKNOWN)
+        {
+            for (uint8_t i=0; i<ANTI_GHOST_MODE_LAST; i++)
+            {
+                if (i==mode)
                 {
-                    // adopt the new column/row data
-                    sColData = colData;
-                    sRowData = sRowDataPrel;
+                    if (sAntiGhostModeId[i]<0xff)
+                    {
+                        sAntiGhostModeId[i]++;
+
+                        // switch when having enough evidence
+                        if (sAntiGhostModeId[i] > ANTI_GHOST_MODE_DETECTION_THRESH)
+                        {
+                            sAntiGhostMode = mode;
+                        }
+                    }
+                }
+                else if (sAntiGhostModeId[i])
+                {
+                    sAntiGhostModeId[i]--;
                 }
             }
         }
