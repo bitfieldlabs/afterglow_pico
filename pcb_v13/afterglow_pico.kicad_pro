@@ -92,7 +92,7 @@
         "through_hole_pad_without_hole": "error",
         "too_many_vias": "error",
         "track_dangling": "warning",
-        "track_width": "error",
+        "track_width": "ignore",
         "tracks_crossing": "error",
         "unconnected_items": "error",
         "unresolved_variable": "error",
