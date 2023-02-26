@@ -55,7 +55,12 @@
           "width": 0.0
         }
       ],
-      "drc_exclusions": [],
+      "drc_exclusions": [
+        "silk_overlap|169252380|101269047|85cbc7b8-340b-4a08-bf9b-fbc9c5534f7e|ad1924d4-fb54-41a4-8ef6-cc74ad223219",
+        "silk_overlap|171302380|101126190|d80f48f2-4feb-4f5a-96b8-8789a9052b7b|099611c2-7882-499b-a587-5a8cf14101c9",
+        "silk_overlap|175377380|101126190|68fe15df-8651-4c45-b21b-f4001dae3165|2d29249b-b806-4512-bd0e-844b973cae52",
+        "silk_overlap|176402380|104884523|67757598-0658-4615-b448-7cb494d57f58|0c6d2ee6-1026-48f6-9ec9-d2a383ba8d21"
+      ],
       "meta": {
         "filename": "board_design_settings.json",
         "version": 2
@@ -75,7 +80,7 @@
         "hole_near_hole": "error",
         "invalid_outline": "error",
         "item_on_disabled_layer": "error",
-        "items_not_allowed": "error",
+        "items_not_allowed": "ignore",
         "length_out_of_range": "error",
         "malformed_courtyard": "error",
         "microvia_drill_out_of_range": "error",
