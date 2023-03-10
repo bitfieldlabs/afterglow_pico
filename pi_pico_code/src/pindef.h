@@ -60,3 +60,4 @@
 #define AG_PICO_PIN_LCOL_OUT 26      // Lamp matrix column output
 #define AG_PICO_PIN_LROW_OUT 27      // Lamp matrix row output
 #define AG_PICO_PIN_DATAOE 28        // Data output enable
+#define AG_PICO_PIN_WS2812 23        // WS2812 data pin

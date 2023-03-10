@@ -27,6 +27,25 @@
 
 #include <stdio.h> 
 
+//------------------------------------------------------------------------------
+// Setup
+
+#define AFTERGLOW_PICO_VERSION 100      // Afterglow pico version number
+#define BOARD_REV                13     // Latest supported Afterglow Pico board revision. Currently v1.3
+#define SINGLE_UPDATE_CONS        2     // Number of consistent data samples required for matrix update. Helps prevent ghosting.
+#define TTAG_INT_A              250     // Matrix update time interval, config A [us]
+#define TTAG_INT_B              500     // Matrix update time interval, config B [us]
+#define PWM_STEPS_A               8     // Number of brightness steps, config A (only 4, 8 an 16 are currently supported)
+#define PWM_STEPS_B               8     // Number of brightness steps, config B (only 4, 8 an 16 are currently supported)
+#define PWM_STEPS                 8     // Number of brightness steps (only 4, 8 an 16 are currently supported)
+#define ANTIGHOST_DURATION       20     // Duration of anti ghosting [us] (turning off all lamps briefly)
+#define DEFAULT_GLOWDUR         140     // Default glow duration [ms]
+#define DEFAULT_BRIGHTNESS        7     // Default maximum lamp brightness 0-7
+#define DEBUG_SERIAL              1     // Turn debug output via serial on/off
+#define PROJECT_BUTTER            1     // Smooth as butter brightness transitions
+#define RGB_LED                   1     // Use the RGB LED as status display
+
+
 // Initialize the afterglow engine
 void ag_init();
 

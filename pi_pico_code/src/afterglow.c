@@ -26,6 +26,7 @@
  ***********************************************************************/
 
 #include <string.h>
+#include <math.h>
 #include "afterglow.h"
 #include "pico/stdlib.h"
 #include "pico/time.h"
@@ -34,34 +35,17 @@
 
 
 //------------------------------------------------------------------------------
-// Setup
+// Some definitions
 
-// Afterglow version number
-#define AFTERGLOW_PICO_VERSION 100
 
 // Afterglow configuration version
 #define AFTERGLOW_CFG_VERSION 3
 
-// Afterglow Pico board revision. Currently v1.3
-#define BOARD_REV 13
-
-// turn debug output via serial on/off
-#define DEBUG_SERIAL 1
-
-// Number of consistent data samples required for matrix update
-#define SINGLE_UPDATE_CONS 2
-
 // original matrix update interval [us]
 #define ORIG_INT (2000)
 
-// local time interval, config A [us]
-#define TTAG_INT_A (250)
-
 // cycles per original interval, config A
 #define ORIG_CYCLES_A (ORIG_INT / TTAG_INT_A)
-
-// local time interval, config B [us]
-#define TTAG_INT_B (500)
 
 // cycles per original interval, config B
 #define ORIG_CYCLES_B (ORIG_INT / TTAG_INT_B)
@@ -72,18 +56,18 @@
 // number of rows in the lamp matrix
 #define NUM_ROW 8
 
-// default glow duration [ms]
-#define DEFAULT_GLOWDUR 140
+// WPC systems strobe the 8 columns
+#define NUM_STROBE NUM_COL
+#define NUM_NONSTROBE NUM_ROW
 
 // glow duration scaling in the configuration
 #define GLOWDUR_CFG_SCALE 10
 
-// default maximum lamp brightness 0-7
-#define DEFAULT_BRIGHTNESS 7
-
 // test mode setup
 #define TEST_MODE_NUMMODES 7    // number of test modes
 #define TEST_MODE_DUR 8         // test duration per mode [s]
+#define TEST_MODE_DUR_CYCLES_A  ((uint32_t)TEST_MODE_DUR * 1000000UL / TTAG_INT_A) // number of cycles per testmode, config A
+#define TEST_MODE_DUR_CYCLES_B  ((uint32_t)TEST_MODE_DUR * 1000000UL / TTAG_INT_B) // number of cycles per testmode, config B
 #define TESTMODE_INT (500)      // test mode lamp switch interval [ms]
 #define TESTMODE_CYCLES_A ((uint32_t)TESTMODE_INT * 1000UL / (uint32_t)TTAG_INT_A) // number of cycles per testmode interval, config A
 #define TESTMODE_CYCLES_B ((uint32_t)TESTMODE_INT * 1000UL / (uint32_t)TTAG_INT_B) // number of cycles per testmode interval, config B
@@ -120,6 +104,46 @@
 #define AG_CMD_NACK "AGCNACK"
 
 
+//------------------------------------------------------------------------------
+// Brightness maps
+
+static const uint8_t skMap_256_4_log[256] =
+{
+    0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+    0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+    0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+    0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+    0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,1,1,
+    1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,
+    1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,2,2,2,2,2,2,2,2,
+    2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,3
+};
+
+static const uint8_t skMap_256_8_log[256] =
+{
+    0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+    0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+    0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,
+    1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,
+    1,1,1,1,1,1,1,1,1,1,1,1,1,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,
+    2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,
+    3,3,3,3,3,3,3,3,3,3,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,5,
+    5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,7
+};
+
+static const uint8_t skMap_256_16_log[256] =
+{
+    0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+    0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,1,1,1,1,1,1,1,
+    1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,2,2,2,2,2,2,2,2,
+    2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,3,3,3,3,3,3,3,3,3,3,3,3,3,
+    3,3,3,3,3,3,3,3,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,5,5,5,5,5,5,
+    5,5,5,5,5,5,5,5,5,5,6,6,6,6,6,6,6,6,6,6,6,6,6,7,7,7,7,7,7,7,7,7,
+    7,7,7,8,8,8,8,8,8,8,8,8,8,8,9,9,9,9,9,9,9,9,9,9,10,10,10,10,10,10,10,10,
+    10,11,11,11,11,11,11,11,11,11,12,12,12,12,12,12,12,13,13,13,13,13,13,13,13,14,14,14,14,14,14,15
+};
+
+
 //-------------#include <stdio.h> -----------------------------------------------------------------
 // function prototypes
 
@@ -128,44 +152,61 @@ void setDefaultCfg();
 void saveCfgToEEPROM();
 void applyCfg();
 void driveLampMatrixPassThrough();
-void driveLampMatrix();
-uint16_t testModeInput(void);
-bool updateValid(uint8_t inColMask, uint8_t inRowMask);
-void updateCol(uint32_t col, uint8_t rowMask);
+void driveLampMatrix(uint16_t outCol);
+uint32_t testModeInput(void);
+bool updateValid(uint16_t inColMask, uint16_t inRowMask);
+void updateCol(uint8_t col, uint16_t rowMask);
 uint32_t calculateCRC32(const uint8_t *data, uint16_t length);
 void dataOutput(uint8_t colData, uint8_t rowData);
 void updateMx(uint16_t *pMx, bool on, uint16_t step);
 void debugInputs(uint8_t inColMask, uint8_t inRowMask);
 void debugOutput(uint8_t outColMask, uint8_t outRowMask);
-
-
-//------------------------------------------------------------------------------
-// global variables
+uint8_t findSubCycle(uint16_t v);
+bool checkValidStrobeMask(uint16_t inColMask, uint16_t inRowMask, uint8_t *pStrobeLine);
+void updateStrobe(uint8_t strobe, uint16_t colMask, uint16_t rowMask);
+void statusUpdate();
+void ws2812Update(uint32_t rgb);
+#if PROJECT_BUTTER
+void updateOutCol(uint16_t outCol);
+#endif
 
 // Lamp matrix 'memory'
 static uint16_t sMatrixState[NUM_COL][NUM_ROW];
-    
+
+#if PROJECT_BUTTER
+// Step per matrix update for all lamps
+static uint16_t sMatrixSteps[NUM_COL][NUM_ROW];
+static bool sMatrixStepsDir[NUM_COL][NUM_ROW];
+
+// Matrix value to brightness map
+static const uint8_t *sBrightnessMap;
+#endif
+
 // local time
 static uint32_t sTtag = 0;
 
 // interrupt runtime counters [cycles]
-static int64_t sLastIntTime = 0;
-static int64_t sMaxIntTime = 0;
+static uint16_t sLastIntTime = 0;
+static uint16_t sMaxIntTime = 0;
 static volatile uint16_t sOverflowCount = 0;
 
 // remember the last column and row samples
-static uint8_t sLastColMask = 0;
-static uint8_t sLastRowMask = 0;
+static uint16_t sLastColMask = 0;
+static uint16_t sLastRowMask = 0;
+static uint32_t sConsBadStrobeCounter = 0;
 
 #if DEBUG_SERIAL
-static uint8_t sLastOutColMask = 0;
-static uint8_t sLastOutRowMask = 0;
-static uint32_t sBadColCounter = 0;
-static uint32_t sBadColOrderCounter = 0;
-static uint8_t sLastBadCol = 0;
-static uint8_t sLastGoodCol = 0;
+static uint16_t sLastOutColMask = 0;
+static uint16_t sLastOutRowMask = 0;
+static uint32_t sBadStrobeCounter = 0;
+static uint32_t sBadStrobeOrderCounter = 0;
+static uint32_t sZeroStrobeCounter = 0;
+static uint16_t sLastBadStrobeMask = 0;
+static uint8_t sLastGoodStrobeLine = 0;
+#if CURRENT_MONITOR
 static int sMaxCurr = 0;
 static int sLastCurr = 0;
+#endif
 #endif
 
 // afterglow configuration data definition
@@ -197,6 +238,25 @@ static uint16_t sGlowSteps[NUM_COL][NUM_ROW];
 
 // precalculated maximum subcycle for lamp activation (brightness)
 static uint8_t sMaxSubcycle[NUM_COL][NUM_ROW];
+
+// last state of PINB
+static uint8_t sLastPINB = 0;
+
+// status enumeration
+typedef enum AFTERGLOW_STATUS_e
+{
+    AG_STATUS_INIT = 0,     // initialising
+    AG_STATUS_OK,           // up and running
+    AG_STATUS_PASSTHROUGH,  // ready in pass-through mode
+    AG_STATUS_TESTMODE,     // ready in test mode
+    AG_STATUS_REPLAY,       // ready in replay mode
+    AG_STATUS_INVINPUT,     // invalid input
+    AG_STATUS_OVERRUN       // interrupt overrun
+} AFTERGLOW_STATUS_t;
+
+// afterglow status
+static AFTERGLOW_STATUS_t sStatus = AG_STATUS_INIT;
+static AFTERGLOW_STATUS_t sLastStatus = AG_STATUS_INIT;
 
 
 //------------------------------------------------------------------------------
@@ -250,17 +310,16 @@ void stop()
 //------------------------------------------------------------------------------
 // This is the realtime task update. All the afterglow magic happens here.
 void ag_update()
-{   
+{
     // time is running
     absolute_time_t startCnt = get_absolute_time();
     sTtag++;
 
-    // read the test mode configuration
-    sTstModeCfg.testMode = !gpio_get(AG_PICO_PIN_TESTMODE_IN);
+    // which column are we updating in this run?
+    uint16_t outCol = (sTtag % NUM_COL);
 
     // kick the dog
-    // todo
-    //wdt_reset();
+    //wdt_reset();  // TODO
 
     // Drive the lamp matrix
     // This is done before updating the matrix to avoid having an irregular update
@@ -273,12 +332,11 @@ void ag_update()
     else
     {
         // afterglow mode
-        driveLampMatrix();
+        driveLampMatrix(outCol);
     }
 
     // get lamp matrix input from the PIO
     uint16_t inData = pio_col_row_data();
-    bool validInput = true;
 
     // testmode input simulation (jumper J1 active)
     if (sTstModeCfg.testMode)
@@ -287,56 +345,46 @@ void ag_update()
         inData = testModeInput();
     }
 
-    uint8_t inColMask = (inData >> 8);    // LSB is col 0, MSB is col 7
-    uint8_t inRowMask = ~(uint8_t)inData;  // LSB is row 0, MSB is row 7, HIGH means off
+    uint16_t inColMask = (uint16_t)(inData >> 16); // LSB is col 0, MSB is col 7
+    uint16_t inRowMask = ~(uint16_t)inData; // high means OFF, LSB is row 0, bit 7 is row 7
 
-    // evaluate the column reading
-    // only one bit should be set as only one column can be active at a time
-    uint32_t inCol = NUM_COL;
-    switch (inColMask)
-    {
-        case 0x01: inCol = 0; break;
-        case 0x02: inCol = 1; break;
-        case 0x04: inCol = 2; break;
-        case 0x08: inCol = 3; break;
-        case 0x10: inCol = 4; break;
-        case 0x20: inCol = 5; break;
-        case 0x40: inCol = 6; break;
-        case 0x80: inCol = 7; break;
-        default:
-        {
-#if DEBUG_SERIAL
-            sBadColCounter++;
-            sLastBadCol = inColMask;
-#endif
-            validInput = false;
-        }
-        break;
-    }
+    // evaluate the strobe line reading
+    // only one bit should be set as only one strobe line can be active at a time
+    uint8_t strobeLine;
+    bool validInput = checkValidStrobeMask(inColMask, inRowMask, &strobeLine);
 
-    // The matrix is updated only once per original column cycle. The code
-    // waits for a number of consecutive consistent information before updating the matrix.
+    // The input matrix values are updated only once per original strobe cycle. The code
+    // waits for a number of consecutive consistent information before adopting the new data.
     validInput &= updateValid(inColMask, inRowMask);
 
-    // Update only with a valid input. If the input is invalid the current
-    // matrix state is left unchanged.
+    // Update the input state only with a valid input. If the input is invalid the current
+    // input matrix state is left unchanged.
     if (validInput)
     {
-        // update the current column
-        updateCol(inCol, inRowMask);
+        // update the input data with the current strobe line
+        updateStrobe(strobeLine, inColMask, inRowMask);
 
 #if DEBUG_SERIAL
-        if ((inCol != (sLastGoodCol+1)) && (inCol!=(sLastGoodCol-7)))
+        // monitor for bad strobe line input
+        if ((strobeLine != (sLastGoodStrobeLine+1)) && (strobeLine!=(sLastGoodStrobeLine-NUM_STROBE+1)))
         {
-            sBadColOrderCounter++;
+            sBadStrobeOrderCounter++;
         }
-        sLastGoodCol = inCol;
+        sLastGoodStrobeLine = strobeLine;
 #endif
     }
+
+#if PROJECT_BUTTER
+    // update the current output column with the values from the step matrix
+    updateOutCol(outCol);
+#endif
 
     // remember the last column and row samples
     sLastColMask = inColMask;
     sLastRowMask = inRowMask;
+
+    // status update
+    statusUpdate();
 
     // how long did it take?
     sLastIntTime = absolute_time_diff_us(startCnt, get_absolute_time());
@@ -444,8 +492,8 @@ void ag_sercomm()
             printf("PASS THROUGH!\n");
         }
         printf("TTAG_INT %d\n", sTstModeCfg.freq2kHz ? TTAG_INT_B : TTAG_INT_A);
-        printf("INT dt max %lldus last %lldus ovfl %d\n", sMaxIntTime, sLastIntTime, sOverflowCount);
-        printf("Bad col: %ld col %d ord %ld last good: %d\n", sBadColCounter, sLastBadCol, sBadColOrderCounter, sLastGoodCol);
+        printf("INT dt max %dus last %dus ovfl %d\n", sMaxIntTime, sLastIntTime, sOverflowCount);
+        printf("Bad col: %ld col %d ord %ld last good: %d\n", sBadStrobeCounter, sLastBadStrobeMask, sBadStrobeOrderCounter, sLastGoodStrobeLine);
         // data debugging
         debugInputs(sLastColMask, sLastRowMask);
         debugOutput(sLastOutColMask, sLastOutRowMask);
@@ -464,59 +512,96 @@ void ag_sercomm()
 #endif
 }
 
+#if PROJECT_BUTTER
+//------------------------------------------------------------------------------
+void updateOutCol(uint16_t outCol)
+{
+    // get a pointer to the matrix column
+    uint16_t *pMx = &sMatrixState[outCol][0];
+    uint16_t *pMxSt = &sMatrixSteps[outCol][0];
+    bool *pMxStDir = &sMatrixStepsDir[outCol][0];
+
+    for (uint8_t r=0; r<NUM_ROW; r++)
+    {
+        // update the matrix value
+        updateMx(pMx, *pMxStDir, *pMxSt);
+
+        // next row
+        pMx++;
+        pMxSt++;
+        pMxStDir++;
+    }
+}
+#endif
+
 //------------------------------------------------------------------------------
 void updateMx(uint16_t *pMx, bool on, uint16_t step)
 {
     if (on)
     {
         // increase the stored brightness value
-        if (*pMx < (65535 - step))
-        {
-            *pMx += step;
-        }
-        else
-        {
-            *pMx = 0xffff;
-        }
+        uint16_t v = (*pMx + step);
+        *pMx = (v < step) ? 0xffff : v;
     }
     else
     {
         // decrease the stored brightness value
-        if (*pMx > step)
-        {
-            *pMx -= step;
-        }
-        else
-        {
-            *pMx = 0;
-        }
+        uint16_t v = (*pMx - step);
+        *pMx = (v > step) ? 0 : v;
     }
 }
 
 //------------------------------------------------------------------------------
-void updateCol(uint32_t col, uint8_t rowMask)
+void updateCol(uint8_t col, uint16_t rowMask)
 {
     // paranoia check
     if (col >= NUM_COL)
     {
         return;
     }
-    
+
+#if (PROJECT_BUTTER == 0)
     // get a pointer to the matrix column
     uint16_t *pMx = &sMatrixState[col][0];
     const uint16_t *pkStep = &sGlowSteps[col][0];
 
     // update all row values
-    for (uint32_t r=0; r<NUM_ROW; r++)
+    for (uint8_t r=0; r<NUM_ROW; r++)
     {
         // update the matrix value
-        updateMx(pMx, (rowMask & 0x01), *pkStep);
+        updateMx(pMx, (rowMask & 0x0001), *pkStep);
 
         // next row
         pMx++;
         pkStep++;
         rowMask >>= 1;
     }
+#else
+    // get a pointer to the matrix steps column
+    uint16_t *pMxSt = &sMatrixSteps[col][0];
+    bool *pMxStDir = &sMatrixStepsDir[col][0];
+    const uint16_t *pkStep = &sGlowSteps[col][0];
+
+    // update all row values
+    for (uint8_t r=0; r<NUM_ROW; r++)
+    {
+        // set the matrix step value
+        *pMxStDir = (rowMask & 0x0001);
+        *pMxSt = *pkStep;
+
+        // next row
+        pMxSt++;
+        pMxStDir++;
+        pkStep++;
+        rowMask >>= 1;
+    }
+#endif
+}
+
+//------------------------------------------------------------------------------
+void updateStrobe(uint8_t strobe, uint16_t colMask, uint16_t rowMask)
+{
+    updateCol(strobe, rowMask);
 }
 
 //------------------------------------------------------------------------------
@@ -539,54 +624,41 @@ void driveLampMatrixPassThrough()
 }
 
 //------------------------------------------------------------------------------
-void driveLampMatrix()
-{   
-    // turn off everything briefly to avoid ghosting
-    dataOutput(0x00, 0x00);
-
-    // Wait around 34us. This is about the same time the original WPC anti
-    // ghosting ROM does, so it's probably matching the output hardware quite well.
-    busy_wait_us(34);
-
-    // check which column we're currently updating
-    uint32_t outCol = (sTtag % NUM_COL);
-
-    // The original cycle is divided into ORIG_CYCLES column sub cycles.
+void driveLampMatrix(uint16_t outCol)
+{
+    // The update interval is divided into UPD_CYCLES column sub cycles.
     // These cycles are used to do PWM in order to adjust the lamp brightness.
     //
-    // Illustration with ORIG_CYCLES==4 and four brightness steps B1-B4 and off (B0):
+    // Illustration with UPD_CYCLES==4 and four brightness steps B1-B4 and off (B0):
     //
     // * Lamp on
-    //                      2ms 2ms ...
-    // Orig col            1   2   3   4   5   6   7   8   1   2   3   4   5   6
-    // afterglow col       12345678123456781234567812345678123456781234567812345
-    // col cycle           1       2       3       4       1       2       3
+    // afterglow col       012345670123456701234567012345670123456701234567012345
+    // col cycle           0       1       2       3       0       1       2
     //
     // Brightness 1        *                               *
     // Brightness 2        *       *                       *       *
     // Brightness 3        *       *       *               *       *       *
     // Brightness 4        *       *       *       *       *       *       *
-    uint32_t colCycle = (!sTstModeCfg.freq2kHz) ?
-        ((sTtag / NUM_COL) % ORIG_CYCLES_A) :
-        ((sTtag / NUM_COL) % ORIG_CYCLES_B);
+    uint8_t colCycle = (!sTstModeCfg.freq2kHz) ?
+        (uint8_t)((sTtag / NUM_COL) % PWM_STEPS_A) :
+        (uint8_t)((sTtag / NUM_COL) % PWM_STEPS_B);
 
     // prepare the data
     // LSB is row/col 0, MSB is row/col 7
-    uint8_t colData = (1 << outCol);
-    uint8_t rowData = 0;
+    uint16_t colData = (1 << outCol);
+    uint16_t rowData = 0;
     uint16_t *pMx = &sMatrixState[outCol][0];
     uint8_t *pMaxSubCycle = &sMaxSubcycle[outCol][0];
-    for (uint32_t r=0; r<NUM_ROW; r++)
+    for (uint8_t r=0; r<NUM_ROW; r++)
     {
         // make room for the next bit
         rowData >>= 1;
         
         // nothing to do if the matrix value is zero (off)
-        if (*pMx)
+        //if (*pMx)  // handling the case only down below as we want constant run time here
         {
-            uint16_t subCycle = (!sTstModeCfg.freq2kHz) ?
-                (*pMx / (65536 / ORIG_CYCLES_A)) :
-                (*pMx / (65536 / ORIG_CYCLES_B));
+            // Find the subcycle in the brightness map
+            uint8_t subCycle = findSubCycle(*pMx);
 
             // limit to the configured maximum brightness
             if (subCycle > *pMaxSubCycle)
@@ -598,12 +670,19 @@ void driveLampMatrix()
             // and when the value is high enough for the current sub cycle.
             if (subCycle >= colCycle)
             {
-                rowData |= 0x80;
+                if (*pMx) // handling the OFF state here in order to have a more constant run time
+                {
+                    rowData |= ((uint16_t)1 << (NUM_ROW-1));
+                }
             }
         }
         pMx++;
         pMaxSubCycle++;
     }
+
+    // turn off everything briefly to avoid ghosting
+    dataOutput(0x0000, 0x0000);
+    busy_wait_us(ANTIGHOST_DURATION);
 
     // output the data
     dataOutput(colData, rowData);
@@ -614,6 +693,21 @@ void driveLampMatrix()
 }
 
 //------------------------------------------------------------------------------
+uint8_t findSubCycle(uint16_t v)
+{
+#if (PROJECT_BUTTER == 0)
+    uint8_t subCycle = (PINB & B00000100) ?
+        (uint8_t)(v / (65536 / PWM_STEPS_A)) :
+        (uint8_t)(v / (65536 / PWM_STEPS_B));
+#else
+    // This is done in a non optimal way in order to
+    // maintain a constant runtime.
+    uint8_t subCycle = *(sBrightnessMap + (v >> 8));
+#endif
+    return subCycle;
+}
+
+//------------------------------------------------------------------------------
 void dataOutput(uint8_t colData, uint8_t rowData)
 {
     // data output is handled by PIO
@@ -621,114 +715,206 @@ void dataOutput(uint8_t colData, uint8_t rowData)
 }
 
 //------------------------------------------------------------------------------
-uint16_t testModeInput(void)
+uint32_t testModeInput(void)
 {
     // simulate the original column cycle
-    uint8_t col = (!sTstModeCfg.freq2kHz) ?
-        ((sTtag / ORIG_CYCLES_A) % NUM_COL) :
-        ((sTtag / ORIG_CYCLES_B) % NUM_COL);
-    uint8_t colMask = (1 << col);
-
-    // populate the row
-    uint8_t rowMask = 0;
-   
-    // loop through all available modes
-    uint8_t m = (!sTstModeCfg.freq2kHz) ?
-        (sTtag / (TEST_MODE_DUR * 1000000UL / TTAG_INT_A)) :
-        (sTtag / (TEST_MODE_DUR * 1000000UL / TTAG_INT_B));
-    uint32_t tmp = (!sTstModeCfg.freq2kHz) ?
-        (sTtag / TESTMODE_CYCLES_A) :
-        (sTtag / TESTMODE_CYCLES_B);
-    switch (m % TEST_MODE_NUMMODES)
+    static uint8_t sCycleCounter = 0;
+    static uint8_t sStrobeLine = 0;
+    bool modeA = (!sTstModeCfg.freq2kHz) ? true : false;
+    if ((modeA && (sCycleCounter == ORIG_CYCLES_A)) ||
+        (!modeA && (sCycleCounter == ORIG_CYCLES_B)))
     {
-        case 0:
-        // cycle all columns
+        sCycleCounter = 0;
+        sStrobeLine++;
+    }
+    if (sStrobeLine == NUM_STROBE)
+    {
+        sStrobeLine = 0;
+    }
+    sCycleCounter++;
+    uint16_t strobeMask = ((uint16_t)1 << (uint16_t)sStrobeLine);
+
+    // populate the non strobed mask
+    uint16_t nonStrobeMask = 0;
+
+    // Start simulation if test switch 2 (replay mode) is inactive
+    {       
+        // loop through all available modes
+        static uint32_t sModeCounter = 0;
+        static uint32_t sMode = 0;
+        static uint32_t sModeCycleCounter = 0;
+        static uint32_t sModeCycle = 0;
+        if ((modeA && (sModeCounter == TEST_MODE_DUR_CYCLES_A)) ||
+            (!modeA && (sModeCounter == TEST_MODE_DUR_CYCLES_B)))
         {
-            uint8_t c = (tmp % NUM_COL);
-            if (c == col)
+            sModeCounter = 0;
+            sModeCycleCounter = 0;
+            sModeCycle = 0;
+            sMode++;
+        }
+        if (sMode == TEST_MODE_NUMMODES)
+        {
+            sMode = 0;
+        }
+        sModeCounter++;
+        if ((modeA && (sModeCycleCounter == TESTMODE_CYCLES_A)) ||
+            (!modeA && (sModeCycleCounter == TESTMODE_CYCLES_B)))
+        {
+            sModeCycleCounter = 0;
+            sModeCycle++;
+        }
+        sModeCycleCounter++;
+
+        switch (sMode)
+        {
+            case 0:
+            // cycle all strobe lines
             {
-                rowMask = 0xff;
-            }
-        }
-        break;
-        case 1:
-        // cycle all rows
-        {
-            uint8_t r = (tmp % NUM_ROW);
-            rowMask |= (1 << r);
-        }
-        break;
-        case 2:
-        // cycle all columns (inverted)
-        {
-            uint8_t c = (tmp % NUM_COL);
-            if (c != col)
-            {
-                rowMask = 0xff;
-            }
-        }
-        break;
-        case 3:
-        // cycle all rows (inverted)
-        {
-            uint8_t r = (tmp % NUM_ROW);
-            rowMask = ~(1 << r);
-        }
-        break;
-        case 4:
-        // blink all lamps
-        {
-            if (tmp % 2)
-            {
-                rowMask = 0xff;
-            }
-        }
-        break;
-        case 5:
-        // switch between even and odd lamps
-        // turn on every other column
-        {
-            if (col % 2 == (tmp % 2))
-            {
-                rowMask = 0x55;
-                if (tmp % 3)
+                uint8_t s = (sModeCycle % NUM_STROBE);
+                if (s == sStrobeLine)
                 {
-                    rowMask <<= 1;
+                    nonStrobeMask = 0xffff;
                 }
             }
-        }
-        break;
-        case 6:
-        // cycle through all lamps individually with 4x speed
-        {
-            uint8_t l = (uint8_t)((tmp * 4) % (NUM_COL * NUM_ROW));
-            uint8_t c = (l / NUM_ROW);
-            uint8_t r = (l % NUM_COL);
-            if (c == col)
+            break;
+            case 1:
+            // cycle all non strobe lines
             {
-                rowMask = (1 << r);
+                uint8_t ns = (sModeCycle % NUM_NONSTROBE);
+                nonStrobeMask |= ((uint16_t)1 << ns);
             }
+            break;
+            case 2:
+            // cycle all strobe lines (inverted)
+            {
+                uint8_t s = (sModeCycle % NUM_STROBE);
+                if (s != sStrobeLine)
+                {
+                    nonStrobeMask = 0xffff;
+                }
+            }
+            break;
+            case 3:
+            // cycle all non strobe lines (inverted)
+            {
+                uint8_t ns = (sModeCycle % NUM_NONSTROBE);
+                nonStrobeMask = ~(1 << ns);
+            }
+            break;
+            case 4:
+            // blink all lamps
+            {
+                if (sModeCycle % 2)
+                {
+                    nonStrobeMask = 0xffff;
+                }
+            }
+            break;
+            case 5:
+            // switch between even and odd lamps
+            // turn on every other strobe line
+            {
+                if (sStrobeLine % 2 == (sModeCycle % 2))
+                {
+                    nonStrobeMask = 0xaaaa;
+                    if (sModeCycle % 3)
+                    {
+                        nonStrobeMask <<= 1;
+                    }
+                }
+            }
+            break;
+            case 6:
+            // cycle through all lamps individually with 4x speed
+            {
+                uint8_t l = (uint8_t)((sModeCycle * 4) % (NUM_COL * NUM_ROW));
+                uint8_t c = (l / NUM_ROW);
+                uint8_t r = (l % NUM_COL);
+                if (c == sStrobeLine)
+                {
+                    nonStrobeMask = (1 << r);
+                }
+            }
+            break;
+            default:
+            break;
         }
-        break;
-        default:
-        break;
     }
+
+    // assign the column and row mask
+    uint16_t colMask = strobeMask;
+    uint16_t rowMask = nonStrobeMask;
 
     // invert the row mask as in the original input HIGH means off
     rowMask = ~rowMask;
-
-    return ((colMask << 8) | rowMask);
+    return (((uint32_t)colMask << 16) | (uint32_t)rowMask);
 }
 
 //------------------------------------------------------------------------------
-bool updateValid(uint8_t inColMask, uint8_t inRowMask)
+bool checkValidStrobeMask(uint16_t inColMask, uint16_t inRowMask, uint8_t *pStrobeLine)
+{
+    bool validInput = true;
+    *pStrobeLine = NUM_STROBE;
+
+    uint16_t strobeMask = (inColMask & 0x00ff);
+    switch (strobeMask)
+    {
+        case 0x0001: *pStrobeLine = 0; break;
+        case 0x0002: *pStrobeLine = 1; break;
+        case 0x0004: *pStrobeLine = 2; break;
+        case 0x0008: *pStrobeLine = 3; break;
+        case 0x0010: *pStrobeLine = 4; break;
+        case 0x0020: *pStrobeLine = 5; break;
+        case 0x0040: *pStrobeLine = 6; break;
+        case 0x0080: *pStrobeLine = 7; break;
+#if (NUM_STROBE > 8)
+        case 0x0100: *pStrobeLine = 8; break;
+        case 0x0200: *pStrobeLine = 9; break;
+#endif
+        default:
+        {
+            // This may happen if the sample is taken in between column transition.
+            // Depending on the pinball ROM version the duration of this transition varies.
+            // On a Whitewater with Home ROM LH6 (contains anti ghosting updates) this
+            // gap was measured to be around 30us long.
+            // Machines with anti-ghosting firmware will show a gap with no column enabled
+            // for a while during the transition while older firmwares might have two
+            // columns enabled at the same time due to slow transistor deactivation. Both
+            // cases are caught here.
+            // See also https://emmytech.com/arcade/led_ghost_busting/index.html for details.
+            sConsBadStrobeCounter++;
+            sBadStrobeCounter++;
+            if (strobeMask == 0)
+            {
+                sZeroStrobeCounter++;
+            }
+#if DEBUG_SERIAL
+            sLastBadStrobeMask = strobeMask;
+#endif
+            validInput = false;
+        }
+        break;
+    }
+
+    // restart the consecutive bad strobe counter
+    if (validInput)
+    {
+        sConsBadStrobeCounter = 0;
+    }
+    return validInput;
+}
+
+//------------------------------------------------------------------------------
+bool updateValid(uint16_t inColMask, uint16_t inRowMask)
 {
     static uint8_t sConsistentSamples = 0;
-    static uint8_t sLastUpdColMask = 0x00;
+    static uint16_t sLastUpdStrobeMask = 0x0000;
     bool valid = false;
 
-    // check if the current column has not been handled already
-    if (inColMask != sLastUpdColMask)
+    uint16_t strobeMask = inColMask;
+
+    // check if the current strobe line has not been handled already
+    if (strobeMask != sLastUpdStrobeMask)
     {
         // reset the counter when the data changes
         if ((inColMask != sLastColMask) || (inRowMask != sLastRowMask))
@@ -748,7 +934,7 @@ bool updateValid(uint8_t inColMask, uint8_t inRowMask)
         // https://emmytech.com/arcade/led_ghost_busting/index.html for details.
         if (sConsistentSamples >= (SINGLE_UPDATE_CONS-1))
         {
-            sLastUpdColMask = inColMask;
+            sLastUpdStrobeMask = strobeMask;
             valid = true;
         }
     }
@@ -758,6 +944,14 @@ bool updateValid(uint8_t inColMask, uint8_t inRowMask)
 //------------------------------------------------------------------------------
 void applyCfg()
 {
+    uint8_t pwmSteps = (!sTstModeCfg.freq2kHz) ? PWM_STEPS_A : PWM_STEPS_B;
+
+#if PROJECT_BUTTER
+    // select the brightness map according to the current configuration
+    sBrightnessMap = (pwmSteps == 4) ? skMap_256_4_log :
+                     (pwmSteps == 8) ? skMap_256_8_log : skMap_256_16_log;
+#endif
+    
     // calculate the glow steps and maximum subcycles
     uint16_t *pGS = &sGlowSteps[0][0];
     uint8_t *pGlowDur = &sCfg.lampGlowDur[0][0];
@@ -765,19 +959,30 @@ void applyCfg()
     uint8_t *pMaxSubCycle = &sMaxSubcycle[0][0];
     for (uint8_t c=0; c<NUM_COL; c++)
     {
-        for (uint8_t r=0; r<NUM_COL; r++)
+        for (uint8_t r=0; r<NUM_ROW; r++)
         {
-            // brightness step per lamp matrix update (assumes one update per original matrix step)
             uint32_t glowDur = (*pGlowDur * GLOWDUR_CFG_SCALE);
-            *pGS++ = (glowDur > 0) ?
-                ((uint16_t)(65535 / ((glowDur * 1000) / ORIG_INT)) * NUM_COL) : 0xffff;
 
             // translate maximum brightness into maximum lamp driving subcycle
-            *pMaxSubCycle++ = (!sTstModeCfg.freq2kHz) ?
-                (*pBrightness >> (8/ORIG_CYCLES_A-1)) :
-                (*pBrightness >> (8/ORIG_CYCLES_B-1));
+            *pMaxSubCycle = (pwmSteps <= 8) ? (*pBrightness >> (8/pwmSteps-1)) : (*pBrightness << (pwmSteps/8-1));
+
+#if (PROJECT_BUTTER == 0)
+            // brightness step per lamp matrix update (assumes one update per original matrix step)
+            *pGS++ = (glowDur > 0) ?
+                ((uint16_t)(65535 / ((glowDur * 1000) / ORIG_INT)) * NUM_STROBE) : 0xffff;
+#else
+            // brightness step per lamp matrix update (assumes one update per matrix step)
+            uint16_t maxVal = (!sTstModeCfg.freq2kHz) ?
+                (uint16_t)(log10((float)(*pMaxSubCycle)*10.0f/(float)(PWM_STEPS_A-1)) * 65535) :
+                (uint16_t)(log10((float)(*pMaxSubCycle)*10.0f/(float)(PWM_STEPS_B-1)) * 65535);
+            *pGS++ = (glowDur > 0) ?
+                (!sTstModeCfg.freq2kHz) ?
+                 ((uint16_t)(maxVal / ((glowDur * 1000) / TTAG_INT_A)) * NUM_COL) : 
+                 ((uint16_t)(maxVal / ((glowDur * 1000) / TTAG_INT_B)) * NUM_COL) : 0xffff;
+#endif
 
             // next
+            pMaxSubCycle++;
             pGlowDur++;
             pBrightness++;
         }
@@ -984,3 +1189,83 @@ void debugOutput(uint8_t outColMask, uint8_t outRowMask)
     printf("OUT C 0x%02X R 0x%02X\n", outColMask, outRowMask);
 }
 #endif
+
+//------------------------------------------------------------------------------
+void statusUpdate()
+{
+    // update the current status value
+    if (sTstModeCfg.testMode)
+    {
+        // testmode input simulation (jumper J1 active)
+        sStatus = AG_STATUS_TESTMODE;
+    }
+    else
+    {
+        // normal operation
+        sStatus = (sOverflowCount < 100) ? 
+                   ((sConsBadStrobeCounter < 100) ?
+                    ((sTstModeCfg.passThrough) ? AG_STATUS_PASSTHROUGH : AG_STATUS_OK) : AG_STATUS_INVINPUT) : AG_STATUS_OVERRUN;
+    }
+
+    // use the RGB LED to show the status
+    if (sStatus != sLastStatus)
+    {/*
+        switch (sStatus)
+        {
+            case AG_STATUS_INIT: ws2812Update(0x00222222); break;
+            case AG_STATUS_OK: ws2812Update(0x00220000); break;
+            case AG_STATUS_TESTMODE: ws2812Update(0x00220011); break;
+            case AG_STATUS_INVINPUT: ws2812Update(0x00003300); break;
+            case AG_STATUS_OVERRUN: ws2812Update(0x00003333); break;
+            case AG_STATUS_PASSTHROUGH: ws2812Update(0x00333333); break;
+            case AG_STATUS_REPLAY: ws2812Update(0x00110033); break;
+            default: ws2812Update(0x00444444); break;
+        }
+        */
+       ws2812Update(0x00000044);
+        sLastStatus = sStatus;
+    }
+}
+
+//------------------------------------------------------------------------------
+void ws2812Update(uint32_t rgb)
+{
+#if RGB_LED
+    // TODO
+    // AG_PICO_PIN_WS2812
+
+    // turn interrupts off
+    //noInterrupts();
+
+    // write all bits
+    for (uint8_t i=0; i<24; i++)
+    {
+        // pull high
+        gpio_put(AG_PICO_PIN_WS2812, true);
+        asm volatile(
+            "mov  r0, #20\n"    		// 1 cycle
+            "loop1: sub  r0, r0, #1\n"	// 1 cycle
+            "bne   loop1\n"          	// 2 cycles if loop taken, 1 if not
+        );
+
+        // set bit
+        gpio_put(AG_PICO_PIN_WS2812, ((uint8_t)(rgb >> 23) & 0x01));
+        rgb <<= 1;
+        asm volatile(
+            "mov  r0, #20\n"    		// 1 cycle
+            "loop2: sub  r0, r0, #1\n"	// 1 cycle
+            "bne   loop2\n"          	// 2 cycles if loop taken, 1 if not
+        );
+
+        gpio_put(AG_PICO_PIN_WS2812, false);
+        asm volatile(
+            "mov  r0, #30\n"    		// 1 cycle
+            "loop3: sub  r0, r0, #1\n"	// 1 cycle
+            "bne   loop3\n"          	// 2 cycles if loop taken, 1 if not
+        );
+    }
+    // enable all interrupts again
+    //interrupts();
+#endif
+}
+

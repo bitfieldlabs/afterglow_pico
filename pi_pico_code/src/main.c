@@ -72,6 +72,8 @@ int main(void)
     // initialize the Pi Pico's LED
     gpio_init(PICO_DEFAULT_LED_PIN);
     gpio_set_dir(PICO_DEFAULT_LED_PIN, GPIO_OUT);
+    gpio_init(AG_PICO_PIN_WS2812);
+    gpio_set_dir(AG_PICO_PIN_WS2812, GPIO_OUT);
 
     // test mode pin
     gpio_init(AG_PICO_PIN_TESTMODE_IN);
@@ -108,7 +110,7 @@ int main(void)
     }
 
     // Heartbeat setup
-    if (!add_repeating_timer_us(-250, heartbeat, NULL, &sHeartbeatTimer))
+    if (!add_repeating_timer_us(-TTAG_INT_A, heartbeat, NULL, &sHeartbeatTimer))
     {
         printf("Failed to start the heartbeat!\n");
         panic_mode();
