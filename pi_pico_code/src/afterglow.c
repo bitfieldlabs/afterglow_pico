@@ -40,10 +40,10 @@
 #define AFTERGLOW_PICO_VERSION 100
 
 // Afterglow configuration version
-#define AFTERGLOW_CFG_VERSION 1
+#define AFTERGLOW_CFG_VERSION 3
 
-// Afterglow Pico board revision. Currently v1.0
-#define BOARD_REV 10
+// Afterglow Pico board revision. Currently v1.3
+#define BOARD_REV 13
 
 // turn debug output via serial on/off
 #define DEBUG_SERIAL 1
