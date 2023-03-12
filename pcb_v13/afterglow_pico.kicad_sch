@@ -10031,7 +10031,7 @@
   (symbol (lib_id "Device:LED") (at 306.705 48.26 90) (unit 1)
     (in_bom yes) (on_board yes) (dnp no)
     (uuid 00000000-0000-0000-0000-000061b0ac36)
-    (property "Reference" "PWR" (at 309.7022 47.2694 90)
+    (property "Reference" "PWR1" (at 309.7022 47.2694 90)
       (effects (font (size 1.27 1.27)) (justify right))
     )
     (property "Value" "LED" (at 309.7022 49.5808 90)
@@ -10051,7 +10051,7 @@
     (instances
       (project "afterglow_pico"
         (path "/db36f6e3-e72a-487f-bda9-88cc84536f62"
-          (reference "PWR") (unit 1)
+          (reference "PWR1") (unit 1)
         )
       )
     )
