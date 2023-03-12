@@ -345,8 +345,8 @@ void ag_update()
         inData = testModeInput();
     }
 
-    uint16_t inColMask = (uint16_t)(inData >> 16); // LSB is col 0, MSB is col 7
-    uint16_t inRowMask = ~(uint16_t)inData; // high means OFF, LSB is row 0, bit 7 is row 7
+    uint16_t inColMask = (inData >> 8);    // LSB is col 0, MSB is col 7
+    uint16_t inRowMask = ~(inData & 0x00ff);  // LSB is row 0, MSB is row 7, HIGH means off
 
     // evaluate the strobe line reading
     // only one bit should be set as only one strobe line can be active at a time
@@ -1242,27 +1242,15 @@ void ws2812Update(uint32_t rgb)
     {
         // pull high
         gpio_put(AG_PICO_PIN_WS2812, true);
-        asm volatile(
-            "mov  r0, #20\n"    		// 1 cycle
-            "loop1: sub  r0, r0, #1\n"	// 1 cycle
-            "bne   loop1\n"          	// 2 cycles if loop taken, 1 if not
-        );
+        busy_wait_at_least_cycles(40);
 
         // set bit
         gpio_put(AG_PICO_PIN_WS2812, ((uint8_t)(rgb >> 23) & 0x01));
         rgb <<= 1;
-        asm volatile(
-            "mov  r0, #20\n"    		// 1 cycle
-            "loop2: sub  r0, r0, #1\n"	// 1 cycle
-            "bne   loop2\n"          	// 2 cycles if loop taken, 1 if not
-        );
+        busy_wait_at_least_cycles(30);
 
         gpio_put(AG_PICO_PIN_WS2812, false);
-        asm volatile(
-            "mov  r0, #30\n"    		// 1 cycle
-            "loop3: sub  r0, r0, #1\n"	// 1 cycle
-            "bne   loop3\n"          	// 2 cycles if loop taken, 1 if not
-        );
+        busy_wait_at_least_cycles(30);
     }
     // enable all interrupts again
     //interrupts();
