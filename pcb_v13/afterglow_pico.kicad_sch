@@ -8676,7 +8676,7 @@
     (property "Datasheet" "~" (at 371.475 129.54 0)
       (effects (font (size 1.27 1.27)) hide)
     )
-    (property "JLCPCB" "C18417" (at 371.475 129.54 0)
+    (property "JLCPCB" "C2894978" (at 371.475 129.54 0)
       (effects (font (size 1.27 1.27)) hide)
     )
     (pin "1" (uuid 8173bdbb-0e70-48fd-82a3-4d8ca3d1a66d))
