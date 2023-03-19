@@ -3,7 +3,7 @@ The afterglow pico is the newest and tiniest addition to the afterglow family.
 
 It operates differently from the other boards as it is hooked directly into the WPC bus. The underlying concept remains the same though. The original lamp matrix is resampled at 4kHz and PWM is used to add a nice afterglow to the LEDs in your pinball machine.
 
-![afterglow_pico](https://github.com/bitfieldlabs/afterglow_pico/blob/master/pcb_v13/render/pcb_v13_b.jpg "Afterglow Pico")
+![afterglow_pico](https://github.com/bitfieldlabs/afterglow_pico/blob/master/pcb_v13/pictures/pcb_v13.jpg "Afterglow Pico")
 
 ## Disclaimer
 
