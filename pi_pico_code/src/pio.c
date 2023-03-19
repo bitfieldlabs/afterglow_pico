@@ -31,6 +31,7 @@
 #include "read_col_row.pio.h"
 #include "write_col_row.pio.h"
 #include "blanking.pio.h"
+#include "ws2812.pio.h"
 #include "pindef.h"
 
 
@@ -52,15 +53,15 @@ typedef enum ANTI_GHOST_MODE_e
 //------------------------------------------------------------------------------
 // Local data
 
-// Column/row reading and blanking on PIO 0
+// Column/row reading, blanking and WS2812 on PIO 0
 static PIO sPioColRow = pio0;
 static int sSmCol = -1;
 static int sSmRow = -1;
 static int sSmBlank = -1;
-static int sSmDelay = -1;
+static int sSmWS2812 = -1;
 static int sSmColRowOffset = -1;
 static int sSmBlankOffset = -1;
-static int sSmDelayOffset = -1;
+static int sSmWS2812Offset = -1;
 static uint8_t sColData = 0;
 static uint8_t sRowData = 0;
 static uint8_t sColDataPrel = 0; // preliminary column data
@@ -93,6 +94,10 @@ bool pio_init()
     sSmBlankOffset = pio_add_program(sPioColRow, &blanking_program);
     sSmBlank = pio_claim_unused_sm(sPioColRow, true);
     blanking_program_init(sPioColRow, sSmBlank, sSmBlankOffset);
+    // Claim an unused state machine for the WS2812 control program
+    sSmWS2812Offset = pio_add_program(sPioColRow, &ws2812_program);
+    sSmWS2812 = pio_claim_unused_sm(sPioColRow, true);
+    ws2812_program_init(sPioColRow, sSmWS2812, sSmWS2812Offset, AG_PICO_PIN_WS2812, 800000, true);
 
     // Lamp matrix output on PIO 1
 
@@ -102,7 +107,7 @@ bool pio_init()
     sSmOut = pio_claim_unused_sm(sPioOutput, true);
     write_col_row_program_init(sPioOutput, sSmOut, sSmOutOffset);
 
-    return ((sSmCol != -1) && (sSmRow != -1) && (sSmBlank != -1) && (sSmOut != -1));
+    return ((sSmCol != -1) && (sSmRow != -1) && (sSmBlank != -1) && (sSmWS2812 != -1) && (sSmOut != -1));
 }
 
 //------------------------------------------------------------------------------
@@ -230,10 +235,18 @@ void pio_write_col_row_data(uint8_t colData, uint8_t rowData)
 }
 
 //------------------------------------------------------------------------------
+void pio_set_ws2812(uint32_t rgb)
+{
+    pio_sm_put_blocking(sPioColRow, sSmWS2812, rgb << 8u);
+    printf("WS2812 %ld\n", rgb);
+}
+
+//------------------------------------------------------------------------------
 void pio_debug()
 {
     uint8_t pcCol = pio_sm_get_pc(sPioColRow, sSmCol) - sSmColRowOffset;
     uint8_t pcRow = pio_sm_get_pc(sPioColRow, sSmRow) - sSmColRowOffset;
     uint8_t pcWrite = pio_sm_get_pc(sPioOutput, sSmOut) - sSmOutOffset;
-    printf("PIO pc %d %d %d\n", pcCol, pcRow, pcWrite);
+    uint8_t pcWS2812 = pio_sm_get_pc(sPioColRow, sSmWS2812) - sSmWS2812Offset;
+    printf("PIO pc %d %d %d %d\n", pcCol, pcRow, pcWrite, pcWS2812);
 }

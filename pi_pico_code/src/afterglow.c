@@ -480,6 +480,7 @@ void ag_sercomm()
     }
 */
 #if DEBUG_SERIAL
+    pio_set_ws2812(0x88aa9955);
     if ((loopCounter % 5) == 0)
     {
         // print the maximum interrupt runtime
@@ -1209,7 +1210,7 @@ void statusUpdate()
 
     // use the RGB LED to show the status
     if (sStatus != sLastStatus)
-    {/*
+    {
         switch (sStatus)
         {
             case AG_STATUS_INIT: ws2812Update(0x00222222); break;
@@ -1221,8 +1222,6 @@ void statusUpdate()
             case AG_STATUS_REPLAY: ws2812Update(0x00110033); break;
             default: ws2812Update(0x00444444); break;
         }
-        */
-       ws2812Update(0x00000044);
         sLastStatus = sStatus;
     }
 }
@@ -1231,29 +1230,7 @@ void statusUpdate()
 void ws2812Update(uint32_t rgb)
 {
 #if RGB_LED
-    // TODO
-    // AG_PICO_PIN_WS2812
-
-    // turn interrupts off
-    //noInterrupts();
-
-    // write all bits
-    for (uint8_t i=0; i<24; i++)
-    {
-        // pull high
-        gpio_put(AG_PICO_PIN_WS2812, true);
-        busy_wait_at_least_cycles(40);
-
-        // set bit
-        gpio_put(AG_PICO_PIN_WS2812, ((uint8_t)(rgb >> 23) & 0x01));
-        rgb <<= 1;
-        busy_wait_at_least_cycles(30);
-
-        gpio_put(AG_PICO_PIN_WS2812, false);
-        busy_wait_at_least_cycles(30);
-    }
-    // enable all interrupts again
-    //interrupts();
+    pio_set_ws2812(rgb);
 #endif
 }
 

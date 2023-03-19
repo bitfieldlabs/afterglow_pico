@@ -36,5 +36,8 @@ uint16_t pio_col_row_data();
 // Write new column and row data
 void pio_write_col_row_data(uint8_t colData, uint8_t rowData);
 
+// Set new WS2812 color
+void pio_set_ws2812(uint32_t rgb);
+
 // Output some PIO debugging information
 void pio_debug();
