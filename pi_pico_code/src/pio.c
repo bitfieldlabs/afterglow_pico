@@ -238,7 +238,6 @@ void pio_write_col_row_data(uint8_t colData, uint8_t rowData)
 void pio_set_ws2812(uint32_t rgb)
 {
     pio_sm_put_blocking(sPioColRow, sSmWS2812, rgb << 8u);
-    printf("WS2812 %ld\n", rgb);
 }
 
 //------------------------------------------------------------------------------

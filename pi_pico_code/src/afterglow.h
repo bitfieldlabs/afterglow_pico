@@ -30,7 +30,7 @@
 //------------------------------------------------------------------------------
 // Setup
 
-#define AFTERGLOW_PICO_VERSION 100      // Afterglow pico version number
+#define AFTERGLOW_PICO_VERSION 101      // Afterglow pico version number
 #define BOARD_REV                13     // Latest supported Afterglow Pico board revision. Currently v1.3
 #define SINGLE_UPDATE_CONS        2     // Number of consistent data samples required for matrix update. Helps prevent ghosting.
 #define TTAG_INT_A              250     // Matrix update time interval, config A [us]

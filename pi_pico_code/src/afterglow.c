@@ -315,6 +315,9 @@ void ag_update()
     absolute_time_t startCnt = get_absolute_time();
     sTtag++;
 
+    // read the test mode configuration
+    sTstModeCfg.testMode = !gpio_get(AG_PICO_PIN_TESTMODE_IN);
+
     // which column are we updating in this run?
     uint16_t outCol = (sTtag % NUM_COL);
 
@@ -480,7 +483,6 @@ void ag_sercomm()
     }
 */
 #if DEBUG_SERIAL
-    pio_set_ws2812(0x88aa9955);
     if ((loopCounter % 5) == 0)
     {
         // print the maximum interrupt runtime
