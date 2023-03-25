@@ -27,6 +27,7 @@
 
 #include <string.h>
 #include <math.h>
+#include <stdio.h>
 #include "afterglow.h"
 #include "pico/stdlib.h"
 #include "pico/time.h"
@@ -239,9 +240,6 @@ static uint16_t sGlowSteps[NUM_COL][NUM_ROW];
 // precalculated maximum subcycle for lamp activation (brightness)
 static uint8_t sMaxSubcycle[NUM_COL][NUM_ROW];
 
-// last state of PINB
-static uint8_t sLastPINB = 0;
-
 // status enumeration
 typedef enum AFTERGLOW_STATUS_e
 {
@@ -403,85 +401,92 @@ void ag_sercomm()
     // count the loops (used for debug output below)
     static uint32_t loopCounter = 0;
     loopCounter++;
-/*
+
     // check for serial data
-    static String cmd = "";
+    static char cmd[32] = {0};
     static bool complete = false;
-    while (Serial.available() && (complete == false))
-    {
-        char character = Serial.read();
-        if (character != AG_CMD_TERMINATOR)
-        {
-            // add the character and wait for the command terminator
-            cmd.concat(character);
-        }
+    static uint8_t sp = 0;
+    char character = getchar_timeout_us(0);
+	while (character != 255)
+	{
+		if (character != AG_CMD_TERMINATOR)
+		{
+		    cmd[sp++] = character;
+            if (sp == 32)
+            {
+                // buffer overflow
+                sp = 0;
+            }
+		}
         else
         {
             // command complete
             complete = true;
         }
-    }
+		character = getchar_timeout_us(0);
+	}
 
     // handle complete commands
     if (complete)
     {
         // version poll
-        if (cmd == AG_CMD_VERSION_POLL)
+        if (strcmp(cmd, AG_CMD_VERSION_POLL) == 0)
         {
             // Output the version numbers
-            Serial.print(AG_CMD_VERSION_POLL);
-            Serial.print(" ");
-            Serial.print(AFTERGLOW_VERSION);
-            Serial.print(" ");
-            Serial.println(AFTERGLOW_CFG_VERSION);
+            printf("%s %d %d\n", AG_CMD_VERSION_POLL, AFTERGLOW_PICO_VERSION, AFTERGLOW_CFG_VERSION);
         }
 
         // configuration poll
-        else if (cmd == AG_CMD_CFG_POLL)
+        else if (strcmp(cmd, AG_CMD_CFG_POLL) == 0)
         {
             // send the full confiuration
-            sendCfg();
+            //sendCfg();
+            printf("Send CFG\n");
         }
 
         // configuration reset
-        else if (cmd == AG_CMD_CFG_DEFAULT)
+        else if (strcmp(cmd, AG_CMD_CFG_DEFAULT) == 0)
         {
             // reset the configuration to default
-            defaultCfg();
+            //defaultCfg();
+            printf("Default CFG\n");
         }
 
         // configuration write
-        else if (cmd == AG_CMD_CFG_SAVE)
+        else if (strcmp(cmd, AG_CMD_CFG_SAVE) == 0)
         {
             // stop the matrix updates
             stop();
 
             // receive a new configuration
-            receiveCfg();
+            //receiveCfg();
+            printf("Recv CFG\n");
 
             // resume operation
             start();
         }
 
-        cmd = "";
+        memset(cmd, 0, sizeof(cmd));
+        sp = 0;
         complete = false;
     }
 
     // watch out for interval configuration changes
+    /*
     if ((PINB & B00000100) != (sLastPINB & B00000100))
     {
         // reinitialize the timers
         noInterrupts();
         timerSetup();
         sTtag = 0;
-        sLastPINB = PINB;
         interrupts();
 #if DEBUG_SERIAL
         Serial.print("New TTAG_INT: ");
         Serial.println((PINB & B00000100) ? TTAG_INT_A : TTAG_INT_B);
 #endif
     }
-*/
+    */
+
 #if DEBUG_SERIAL
     if ((loopCounter % 5) == 0)
     {
@@ -1235,4 +1240,3 @@ void ws2812Update(uint32_t rgb)
     pio_set_ws2812(rgb);
 #endif
 }
-
