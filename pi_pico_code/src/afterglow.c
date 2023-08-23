@@ -1,8 +1,8 @@
 /***********************************************************************
- *   ___  ___  ___  ___  ___  ___   _    ___  _ _ _ 
+ *   ___  ___  ___  ___  ___  ___   _    ___  _ _ _
  *  | . || __>|_ _|| __>| . \/  _> | |  | . || | | |
  *  |   || _>  | | | _> |   /| <_/\| |_ | | || | | |
- *  |_|_||_|   |_| |___>|_\_\`____/|___|`___'|__/_/ 
+ *  |_|_||_|   |_| |___>|_\_\`____/|___|`___'|__/_/
  *                                                  pico
  *      Copyright (c) 2021 bitfield labs
  *
@@ -34,10 +34,8 @@
 #include "pio.h"
 #include "pindef.h"
 
-
 //------------------------------------------------------------------------------
 // Some definitions
-
 
 // Afterglow configuration version
 #define AFTERGLOW_CFG_VERSION 3
@@ -65,14 +63,13 @@
 #define GLOWDUR_CFG_SCALE 10
 
 // test mode setup
-#define TEST_MODE_NUMMODES 7    // number of test modes
-#define TEST_MODE_DUR 8         // test duration per mode [s]
-#define TEST_MODE_DUR_CYCLES_A  ((uint32_t)TEST_MODE_DUR * 1000000UL / TTAG_INT_A) // number of cycles per testmode, config A
-#define TEST_MODE_DUR_CYCLES_B  ((uint32_t)TEST_MODE_DUR * 1000000UL / TTAG_INT_B) // number of cycles per testmode, config B
-#define TESTMODE_INT (500)      // test mode lamp switch interval [ms]
+#define TEST_MODE_NUMMODES 7                                                       // number of test modes
+#define TEST_MODE_DUR 8                                                            // test duration per mode [s]
+#define TEST_MODE_DUR_CYCLES_A ((uint32_t)TEST_MODE_DUR * 1000000UL / TTAG_INT_A)  // number of cycles per testmode, config A
+#define TEST_MODE_DUR_CYCLES_B ((uint32_t)TEST_MODE_DUR * 1000000UL / TTAG_INT_B)  // number of cycles per testmode, config B
+#define TESTMODE_INT (500)                                                         // test mode lamp switch interval [ms]
 #define TESTMODE_CYCLES_A ((uint32_t)TESTMODE_INT * 1000UL / (uint32_t)TTAG_INT_A) // number of cycles per testmode interval, config A
 #define TESTMODE_CYCLES_B ((uint32_t)TESTMODE_INT * 1000UL / (uint32_t)TTAG_INT_B) // number of cycles per testmode interval, config B
-
 
 //------------------------------------------------------------------------------
 // serial port protocol definition
@@ -104,46 +101,41 @@
 // NOT acknowledge string
 #define AG_CMD_NACK "AGCNACK"
 
-
 //------------------------------------------------------------------------------
 // Brightness maps
 
 static const uint8_t skMap_256_4_log[256] =
-{
-    0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-    0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-    0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-    0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-    0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,1,1,
-    1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,
-    1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,2,2,2,2,2,2,2,2,
-    2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,3
-};
+    {
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1,
+        1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+        1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 2, 2,
+        2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 3};
 
 static const uint8_t skMap_256_8_log[256] =
-{
-    0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-    0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-    0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,
-    1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,
-    1,1,1,1,1,1,1,1,1,1,1,1,1,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,
-    2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,
-    3,3,3,3,3,3,3,3,3,3,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,5,
-    5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,7
-};
+    {
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1,
+        1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+        1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2,
+        2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3,
+        3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 5,
+        5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 7};
 
 static const uint8_t skMap_256_16_log[256] =
-{
-    0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-    0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,1,1,1,1,1,1,1,
-    1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,2,2,2,2,2,2,2,2,
-    2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,3,3,3,3,3,3,3,3,3,3,3,3,3,
-    3,3,3,3,3,3,3,3,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,5,5,5,5,5,5,
-    5,5,5,5,5,5,5,5,5,5,6,6,6,6,6,6,6,6,6,6,6,6,6,7,7,7,7,7,7,7,7,7,
-    7,7,7,8,8,8,8,8,8,8,8,8,8,8,9,9,9,9,9,9,9,9,9,9,10,10,10,10,10,10,10,10,
-    10,11,11,11,11,11,11,11,11,11,12,12,12,12,12,12,12,13,13,13,13,13,13,13,13,14,14,14,14,14,14,15
-};
-
+    {
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+        1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 2, 2,
+        2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3,
+        3, 3, 3, 3, 3, 3, 3, 3, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 5, 5, 5, 5, 5, 5,
+        5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 7, 7, 7, 7, 7, 7, 7, 7, 7,
+        7, 7, 7, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 10, 10, 10, 10, 10, 10, 10, 10,
+        10, 11, 11, 11, 11, 11, 11, 11, 11, 11, 12, 12, 12, 12, 12, 12, 12, 13, 13, 13, 13, 13, 13, 13, 13, 14, 14, 14, 14, 14, 14, 15};
 
 //-------------#include <stdio.h> -----------------------------------------------------------------
 // function prototypes
@@ -228,7 +220,7 @@ typedef struct AFTERGLOW_TESTMODE_s
 {
     bool testMode;
     bool passThrough;
-    bool freq2kHz;      // 2kHz mode (instead of 4kHz)
+    bool freq2kHz; // 2kHz mode (instead of 4kHz)
 } AFTERGLOW_TESTMODE_t;
 
 // afterglow test mode configuration
@@ -243,19 +235,18 @@ static uint8_t sMaxSubcycle[NUM_COL][NUM_ROW];
 // status enumeration
 typedef enum AFTERGLOW_STATUS_e
 {
-    AG_STATUS_INIT = 0,     // initialising
-    AG_STATUS_OK,           // up and running
-    AG_STATUS_PASSTHROUGH,  // ready in pass-through mode
-    AG_STATUS_TESTMODE,     // ready in test mode
-    AG_STATUS_REPLAY,       // ready in replay mode
-    AG_STATUS_INVINPUT,     // invalid input
-    AG_STATUS_OVERRUN       // interrupt overrun
+    AG_STATUS_INIT = 0,    // initialising
+    AG_STATUS_OK,          // up and running
+    AG_STATUS_PASSTHROUGH, // ready in pass-through mode
+    AG_STATUS_TESTMODE,    // ready in test mode
+    AG_STATUS_REPLAY,      // ready in replay mode
+    AG_STATUS_INVINPUT,    // invalid input
+    AG_STATUS_OVERRUN      // interrupt overrun
 } AFTERGLOW_STATUS_t;
 
 // afterglow status
 static AFTERGLOW_STATUS_t sStatus = AG_STATUS_INIT;
 static AFTERGLOW_STATUS_t sLastStatus = AG_STATUS_INIT;
-
 
 //------------------------------------------------------------------------------
 void ag_init()
@@ -296,13 +287,11 @@ void ag_init()
 //------------------------------------------------------------------------------
 void start()
 {
-
 }
 
 //------------------------------------------------------------------------------
 void stop()
 {
-
 }
 
 //------------------------------------------------------------------------------
@@ -320,7 +309,7 @@ void ag_update()
     uint16_t outCol = (sTtag % NUM_COL);
 
     // kick the dog
-    //wdt_reset();  // TODO
+    // wdt_reset();  // TODO
 
     // Drive the lamp matrix
     // This is done before updating the matrix to avoid having an irregular update
@@ -346,8 +335,8 @@ void ag_update()
         inData = testModeInput();
     }
 
-    uint16_t inColMask = (inData >> 8);    // LSB is col 0, MSB is col 7
-    uint16_t inRowMask = ~(inData & 0x00ff);  // LSB is row 0, MSB is row 7, HIGH means off
+    uint16_t inColMask = (inData >> 8);      // LSB is col 0, MSB is col 7
+    uint16_t inRowMask = ~(inData & 0x00ff); // LSB is row 0, MSB is row 7, HIGH means off
 
     // evaluate the strobe line reading
     // only one bit should be set as only one strobe line can be active at a time
@@ -367,7 +356,7 @@ void ag_update()
 
 #if DEBUG_SERIAL
         // monitor for bad strobe line input
-        if ((strobeLine != (sLastGoodStrobeLine+1)) && (strobeLine!=(sLastGoodStrobeLine-NUM_STROBE+1)))
+        if ((strobeLine != (sLastGoodStrobeLine + 1)) && (strobeLine != (sLastGoodStrobeLine - NUM_STROBE + 1)))
         {
             sBadStrobeOrderCounter++;
         }
@@ -407,24 +396,24 @@ void ag_sercomm()
     static bool complete = false;
     static uint8_t sp = 0;
     char character = getchar_timeout_us(0);
-	while (character != 255)
-	{
-		if (character != AG_CMD_TERMINATOR)
-		{
-		    cmd[sp++] = character;
+    while (character != 255)
+    {
+        if (character != AG_CMD_TERMINATOR)
+        {
+            cmd[sp++] = character;
             if (sp == 32)
             {
                 // buffer overflow
                 sp = 0;
             }
-		}
+        }
         else
         {
             // command complete
             complete = true;
         }
-		character = getchar_timeout_us(0);
-	}
+        character = getchar_timeout_us(0);
+    }
 
     // handle complete commands
     if (complete)
@@ -440,7 +429,7 @@ void ag_sercomm()
         else if (strcmp(cmd, AG_CMD_CFG_POLL) == 0)
         {
             // send the full confiuration
-            //sendCfg();
+            // sendCfg();
             printf("Send CFG\n");
         }
 
@@ -448,7 +437,7 @@ void ag_sercomm()
         else if (strcmp(cmd, AG_CMD_CFG_DEFAULT) == 0)
         {
             // reset the configuration to default
-            //defaultCfg();
+            // defaultCfg();
             printf("Default CFG\n");
         }
 
@@ -459,7 +448,7 @@ void ag_sercomm()
             stop();
 
             // receive a new configuration
-            //receiveCfg();
+            // receiveCfg();
             printf("Recv CFG\n");
 
             // resume operation
@@ -506,10 +495,10 @@ void ag_sercomm()
         debugInputs(sLastColMask, sLastRowMask);
         debugOutput(sLastOutColMask, sLastOutRowMask);
         // dump the full matrix
-        for (uint32_t c=0; c<NUM_COL; c++)
+        for (uint32_t c = 0; c < NUM_COL; c++)
         {
             printf("C%lu + ", c);
-            for (uint32_t r=0; r<NUM_ROW; r++)
+            for (uint32_t r = 0; r < NUM_ROW; r++)
             {
                 printf("%d", sMatrixState[c][r]);
                 printf(" ");
@@ -529,7 +518,7 @@ void updateOutCol(uint16_t outCol)
     uint16_t *pMxSt = &sMatrixSteps[outCol][0];
     bool *pMxStDir = &sMatrixStepsDir[outCol][0];
 
-    for (uint8_t r=0; r<NUM_ROW; r++)
+    for (uint8_t r = 0; r < NUM_ROW; r++)
     {
         // update the matrix value
         updateMx(pMx, *pMxStDir, *pMxSt);
@@ -574,7 +563,7 @@ void updateCol(uint8_t col, uint16_t rowMask)
     const uint16_t *pkStep = &sGlowSteps[col][0];
 
     // update all row values
-    for (uint8_t r=0; r<NUM_ROW; r++)
+    for (uint8_t r = 0; r < NUM_ROW; r++)
     {
         // update the matrix value
         updateMx(pMx, (rowMask & 0x0001), *pkStep);
@@ -591,7 +580,7 @@ void updateCol(uint8_t col, uint16_t rowMask)
     const uint16_t *pkStep = &sGlowSteps[col][0];
 
     // update all row values
-    for (uint8_t r=0; r<NUM_ROW; r++)
+    for (uint8_t r = 0; r < NUM_ROW; r++)
     {
         // set the matrix step value
         *pMxStDir = (rowMask & 0x0001);
@@ -647,9 +636,7 @@ void driveLampMatrix(uint16_t outCol)
     // Brightness 2        *       *                       *       *
     // Brightness 3        *       *       *               *       *       *
     // Brightness 4        *       *       *       *       *       *       *
-    uint8_t colCycle = (!sTstModeCfg.freq2kHz) ?
-        (uint8_t)((sTtag / NUM_COL) % PWM_STEPS_A) :
-        (uint8_t)((sTtag / NUM_COL) % PWM_STEPS_B);
+    uint8_t colCycle = (!sTstModeCfg.freq2kHz) ? (uint8_t)((sTtag / NUM_COL) % PWM_STEPS_A) : (uint8_t)((sTtag / NUM_COL) % PWM_STEPS_B);
 
     // prepare the data
     // LSB is row/col 0, MSB is row/col 7
@@ -657,13 +644,13 @@ void driveLampMatrix(uint16_t outCol)
     uint16_t rowData = 0;
     uint16_t *pMx = &sMatrixState[outCol][0];
     uint8_t *pMaxSubCycle = &sMaxSubcycle[outCol][0];
-    for (uint8_t r=0; r<NUM_ROW; r++)
+    for (uint8_t r = 0; r < NUM_ROW; r++)
     {
         // make room for the next bit
         rowData >>= 1;
-        
+
         // nothing to do if the matrix value is zero (off)
-        //if (*pMx)  // handling the case only down below as we want constant run time here
+        // if (*pMx)  // handling the case only down below as we want constant run time here
         {
             // Find the subcycle in the brightness map
             uint8_t subCycle = findSubCycle(*pMx);
@@ -680,7 +667,7 @@ void driveLampMatrix(uint16_t outCol)
             {
                 if (*pMx) // handling the OFF state here in order to have a more constant run time
                 {
-                    rowData |= ((uint16_t)1 << (NUM_ROW-1));
+                    rowData |= ((uint16_t)1 << (NUM_ROW - 1));
                 }
             }
         }
@@ -704,9 +691,7 @@ void driveLampMatrix(uint16_t outCol)
 uint8_t findSubCycle(uint16_t v)
 {
 #if (PROJECT_BUTTER == 0)
-    uint8_t subCycle = (PINB & B00000100) ?
-        (uint8_t)(v / (65536 / PWM_STEPS_A)) :
-        (uint8_t)(v / (65536 / PWM_STEPS_B));
+    uint8_t subCycle = (PINB & B00000100) ? (uint8_t)(v / (65536 / PWM_STEPS_A)) : (uint8_t)(v / (65536 / PWM_STEPS_B));
 #else
     // This is done in a non optimal way in order to
     // maintain a constant runtime.
@@ -746,7 +731,7 @@ uint32_t testModeInput(void)
     uint16_t nonStrobeMask = 0;
 
     // Start simulation if test switch 2 (replay mode) is inactive
-    {       
+    {
         // loop through all available modes
         static uint32_t sModeCounter = 0;
         static uint32_t sMode = 0;
@@ -775,7 +760,7 @@ uint32_t testModeInput(void)
 
         switch (sMode)
         {
-            case 0:
+        case 0:
             // cycle all strobe lines
             {
                 uint8_t s = (sModeCycle % NUM_STROBE);
@@ -785,14 +770,14 @@ uint32_t testModeInput(void)
                 }
             }
             break;
-            case 1:
+        case 1:
             // cycle all non strobe lines
             {
                 uint8_t ns = (sModeCycle % NUM_NONSTROBE);
                 nonStrobeMask |= ((uint16_t)1 << ns);
             }
             break;
-            case 2:
+        case 2:
             // cycle all strobe lines (inverted)
             {
                 uint8_t s = (sModeCycle % NUM_STROBE);
@@ -802,14 +787,14 @@ uint32_t testModeInput(void)
                 }
             }
             break;
-            case 3:
+        case 3:
             // cycle all non strobe lines (inverted)
             {
                 uint8_t ns = (sModeCycle % NUM_NONSTROBE);
                 nonStrobeMask = ~(1 << ns);
             }
             break;
-            case 4:
+        case 4:
             // blink all lamps
             {
                 if (sModeCycle % 2)
@@ -818,7 +803,7 @@ uint32_t testModeInput(void)
                 }
             }
             break;
-            case 5:
+        case 5:
             // switch between even and odd lamps
             // turn on every other strobe line
             {
@@ -832,7 +817,7 @@ uint32_t testModeInput(void)
                 }
             }
             break;
-            case 6:
+        case 6:
             // cycle through all lamps individually with 4x speed
             {
                 uint8_t l = (uint8_t)((sModeCycle * 4) % (NUM_COL * NUM_ROW));
@@ -844,7 +829,7 @@ uint32_t testModeInput(void)
                 }
             }
             break;
-            default:
+        default:
             break;
         }
     }
@@ -867,41 +852,61 @@ bool checkValidStrobeMask(uint16_t inColMask, uint16_t inRowMask, uint8_t *pStro
     uint16_t strobeMask = (inColMask & 0x00ff);
     switch (strobeMask)
     {
-        case 0x0001: *pStrobeLine = 0; break;
-        case 0x0002: *pStrobeLine = 1; break;
-        case 0x0004: *pStrobeLine = 2; break;
-        case 0x0008: *pStrobeLine = 3; break;
-        case 0x0010: *pStrobeLine = 4; break;
-        case 0x0020: *pStrobeLine = 5; break;
-        case 0x0040: *pStrobeLine = 6; break;
-        case 0x0080: *pStrobeLine = 7; break;
-#if (NUM_STROBE > 8)
-        case 0x0100: *pStrobeLine = 8; break;
-        case 0x0200: *pStrobeLine = 9; break;
-#endif
-        default:
-        {
-            // This may happen if the sample is taken in between column transition.
-            // Depending on the pinball ROM version the duration of this transition varies.
-            // On a Whitewater with Home ROM LH6 (contains anti ghosting updates) this
-            // gap was measured to be around 30us long.
-            // Machines with anti-ghosting firmware will show a gap with no column enabled
-            // for a while during the transition while older firmwares might have two
-            // columns enabled at the same time due to slow transistor deactivation. Both
-            // cases are caught here.
-            // See also https://emmytech.com/arcade/led_ghost_busting/index.html for details.
-            sConsBadStrobeCounter++;
-            sBadStrobeCounter++;
-            if (strobeMask == 0)
-            {
-                sZeroStrobeCounter++;
-            }
-#if DEBUG_SERIAL
-            sLastBadStrobeMask = strobeMask;
-#endif
-            validInput = false;
-        }
+    case 0x0001:
+        *pStrobeLine = 0;
         break;
+    case 0x0002:
+        *pStrobeLine = 1;
+        break;
+    case 0x0004:
+        *pStrobeLine = 2;
+        break;
+    case 0x0008:
+        *pStrobeLine = 3;
+        break;
+    case 0x0010:
+        *pStrobeLine = 4;
+        break;
+    case 0x0020:
+        *pStrobeLine = 5;
+        break;
+    case 0x0040:
+        *pStrobeLine = 6;
+        break;
+    case 0x0080:
+        *pStrobeLine = 7;
+        break;
+#if (NUM_STROBE > 8)
+    case 0x0100:
+        *pStrobeLine = 8;
+        break;
+    case 0x0200:
+        *pStrobeLine = 9;
+        break;
+#endif
+    default:
+    {
+        // This may happen if the sample is taken in between column transition.
+        // Depending on the pinball ROM version the duration of this transition varies.
+        // On a Whitewater with Home ROM LH6 (contains anti ghosting updates) this
+        // gap was measured to be around 30us long.
+        // Machines with anti-ghosting firmware will show a gap with no column enabled
+        // for a while during the transition while older firmwares might have two
+        // columns enabled at the same time due to slow transistor deactivation. Both
+        // cases are caught here.
+        // See also https://emmytech.com/arcade/led_ghost_busting/index.html for details.
+        sConsBadStrobeCounter++;
+        sBadStrobeCounter++;
+        if (strobeMask == 0)
+        {
+            sZeroStrobeCounter++;
+        }
+#if DEBUG_SERIAL
+        sLastBadStrobeMask = strobeMask;
+#endif
+        validInput = false;
+    }
+    break;
     }
 
     // restart the consecutive bad strobe counter
@@ -940,7 +945,7 @@ bool updateValid(uint16_t inColMask, uint16_t inRowMask)
         // before updating the matrix.
         // This also avoids ghosting issues, see
         // https://emmytech.com/arcade/led_ghost_busting/index.html for details.
-        if (sConsistentSamples >= (SINGLE_UPDATE_CONS-1))
+        if (sConsistentSamples >= (SINGLE_UPDATE_CONS - 1))
         {
             sLastUpdStrobeMask = strobeMask;
             valid = true;
@@ -956,37 +961,31 @@ void applyCfg()
 
 #if PROJECT_BUTTER
     // select the brightness map according to the current configuration
-    sBrightnessMap = (pwmSteps == 4) ? skMap_256_4_log :
-                     (pwmSteps == 8) ? skMap_256_8_log : skMap_256_16_log;
+    sBrightnessMap = (pwmSteps == 4) ? skMap_256_4_log : (pwmSteps == 8) ? skMap_256_8_log
+                                                                         : skMap_256_16_log;
 #endif
-    
+
     // calculate the glow steps and maximum subcycles
     uint16_t *pGS = &sGlowSteps[0][0];
     uint8_t *pGlowDur = &sCfg.lampGlowDur[0][0];
     uint8_t *pBrightness = &sCfg.lampBrightness[0][0];
     uint8_t *pMaxSubCycle = &sMaxSubcycle[0][0];
-    for (uint8_t c=0; c<NUM_COL; c++)
+    for (uint8_t c = 0; c < NUM_COL; c++)
     {
-        for (uint8_t r=0; r<NUM_ROW; r++)
+        for (uint8_t r = 0; r < NUM_ROW; r++)
         {
             uint32_t glowDur = (*pGlowDur * GLOWDUR_CFG_SCALE);
 
             // translate maximum brightness into maximum lamp driving subcycle
-            *pMaxSubCycle = (pwmSteps <= 8) ? (*pBrightness >> (8/pwmSteps-1)) : (*pBrightness << (pwmSteps/8-1));
+            *pMaxSubCycle = (pwmSteps <= 8) ? (*pBrightness >> (8 / pwmSteps - 1)) : (*pBrightness << (pwmSteps / 8 - 1));
 
 #if (PROJECT_BUTTER == 0)
             // brightness step per lamp matrix update (assumes one update per original matrix step)
-            *pGS++ = (glowDur > 0) ?
-                ((uint16_t)(65535 / ((glowDur * 1000) / ORIG_INT)) * NUM_STROBE) : 0xffff;
+            *pGS++ = (glowDur > 0) ? ((uint16_t)(65535 / ((glowDur * 1000) / ORIG_INT)) * NUM_STROBE) : 0xffff;
 #else
             // brightness step per lamp matrix update (assumes one update per matrix step)
-            uint16_t maxVal = (!sTstModeCfg.freq2kHz) ?
-                (uint16_t)(log10((float)(*pMaxSubCycle)*10.0f/(float)(PWM_STEPS_A-1)) * 65535) :
-                (uint16_t)(log10((float)(*pMaxSubCycle)*10.0f/(float)(PWM_STEPS_B-1)) * 65535);
-            *pGS++ = (glowDur > 0) ?
-                (!sTstModeCfg.freq2kHz) ?
-                 ((uint16_t)(maxVal / ((glowDur * 1000) / TTAG_INT_A)) * NUM_COL) : 
-                 ((uint16_t)(maxVal / ((glowDur * 1000) / TTAG_INT_B)) * NUM_COL) : 0xffff;
+            uint16_t maxVal = (!sTstModeCfg.freq2kHz) ? (uint16_t)(log10((float)(*pMaxSubCycle) * 10.0f / (float)(PWM_STEPS_A - 1)) * 65535) : (uint16_t)(log10((float)(*pMaxSubCycle) * 10.0f / (float)(PWM_STEPS_B - 1)) * 65535);
+            *pGS++ = (glowDur > 0) ? (!sTstModeCfg.freq2kHz) ? ((uint16_t)(maxVal / ((glowDur * 1000) / TTAG_INT_A)) * NUM_COL) : ((uint16_t)(maxVal / ((glowDur * 1000) / TTAG_INT_B)) * NUM_COL) : 0xffff;
 #endif
 
             // next
@@ -1005,9 +1004,9 @@ void setDefaultCfg()
     sCfg.version = AFTERGLOW_CFG_VERSION;
     uint8_t *pGlowDur = &sCfg.lampGlowDur[0][0];
     uint8_t *pBrightness = &sCfg.lampBrightness[0][0];
-    for (uint8_t c=0; c<NUM_COL; c++)
+    for (uint8_t c = 0; c < NUM_COL; c++)
     {
-        for (uint8_t r=0; r<NUM_ROW; r++)
+        for (uint8_t r = 0; r < NUM_ROW; r++)
         {
             *pGlowDur++ = (DEFAULT_GLOWDUR / GLOWDUR_CFG_SCALE);
             *pBrightness++ = DEFAULT_BRIGHTNESS;
@@ -1016,7 +1015,7 @@ void setDefaultCfg()
 
     // calculate the crc
     uint16_t cfgSize = sizeof(sCfg);
-    sCfg.crc = calculateCRC32((uint8_t*)&sCfg, cfgSize-sizeof(sCfg.crc));
+    sCfg.crc = calculateCRC32((uint8_t *)&sCfg, cfgSize - sizeof(sCfg.crc));
 }
 
 //------------------------------------------------------------------------------
@@ -1210,9 +1209,7 @@ void statusUpdate()
     else
     {
         // normal operation
-        sStatus = (sOverflowCount < 100) ? 
-                   ((sConsBadStrobeCounter < 100) ?
-                    ((sTstModeCfg.passThrough) ? AG_STATUS_PASSTHROUGH : AG_STATUS_OK) : AG_STATUS_INVINPUT) : AG_STATUS_OVERRUN;
+        sStatus = (sOverflowCount < 100) ? ((sConsBadStrobeCounter < 100) ? ((sTstModeCfg.passThrough) ? AG_STATUS_PASSTHROUGH : AG_STATUS_OK) : AG_STATUS_INVINPUT) : AG_STATUS_OVERRUN;
     }
 
     // use the RGB LED to show the status
@@ -1220,14 +1217,30 @@ void statusUpdate()
     {
         switch (sStatus)
         {
-            case AG_STATUS_INIT: ws2812Update(0x00222222); break;
-            case AG_STATUS_OK: ws2812Update(0x00220000); break;
-            case AG_STATUS_TESTMODE: ws2812Update(0x00220011); break;
-            case AG_STATUS_INVINPUT: ws2812Update(0x00003300); break;
-            case AG_STATUS_OVERRUN: ws2812Update(0x00003333); break;
-            case AG_STATUS_PASSTHROUGH: ws2812Update(0x00333333); break;
-            case AG_STATUS_REPLAY: ws2812Update(0x00110033); break;
-            default: ws2812Update(0x00444444); break;
+        case AG_STATUS_INIT:
+            ws2812Update(0x00222222);
+            break;
+        case AG_STATUS_OK:
+            ws2812Update(0x00220000);
+            break;
+        case AG_STATUS_TESTMODE:
+            ws2812Update(0x00220011);
+            break;
+        case AG_STATUS_INVINPUT:
+            ws2812Update(0x00003300);
+            break;
+        case AG_STATUS_OVERRUN:
+            ws2812Update(0x00003333);
+            break;
+        case AG_STATUS_PASSTHROUGH:
+            ws2812Update(0x00333333);
+            break;
+        case AG_STATUS_REPLAY:
+            ws2812Update(0x00110033);
+            break;
+        default:
+            ws2812Update(0x00444444);
+            break;
         }
         sLastStatus = sStatus;
     }
