@@ -56,19 +56,14 @@
           "width": 0.0
         }
       ],
-      "drc_exclusions": [
-        "silk_edge_clearance|164275000|58402500|8de67111-8ff2-4b41-8e9c-e71c2f7e9e3f|123ee6e9-7c1a-49d8-86cd-528b36d68d5b",
-        "silk_edge_clearance|172075000|58402500|8de67111-8ff2-4b41-8e9c-e71c2f7e9e3f|1b41a5ab-e68f-4320-877a-669d63221196",
-        "text_height|189250000|133225000|72e04782-f1e8-415d-9c6d-fb015f622bd1|00000000-0000-0000-0000-000000000000",
-        "text_height|198325000|133200000|00000000-0000-0000-0000-000061a93030|00000000-0000-0000-0000-000000000000"
-      ],
+      "drc_exclusions": [],
       "meta": {
         "filename": "board_design_settings.json",
         "version": 2
       },
       "rule_severities": {
         "annular_width": "error",
-        "clearance": "ignore",
+        "clearance": "error",
         "connection_width": "warning",
         "copper_edge_clearance": "error",
         "copper_sliver": "warning",
