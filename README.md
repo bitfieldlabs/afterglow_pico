@@ -10,6 +10,8 @@ It operates differently from the other boards as it is hooked directly into the 
 | :boom: WARNING  :boom:            |
 |:---------------------------|
 | *Messing with your pinball machine's data bus is risky!* |
+| *The AG pico is an experiment, for stable afterglow please* |
+| *use the standard afterglow boards.* |
 
 Afterglow is distributed in the hope that it will be useful but WITHOUT ANY WARRANTY; without even the implied warranty of
 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public License for more details.
